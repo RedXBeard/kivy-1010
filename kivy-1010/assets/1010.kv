@@ -1,0 +1,39 @@
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+
+<Label>
+    canvas.before:
+        Color:
+            rgba: get_color_from_hex('E2DDD5')
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<Kivy1010>
+    cols: 1
+    rows: 2
+    padding: 20, 10, 20, 10
+    board: board
+    comingLeft: comingLeft
+    comingMid: comingMid
+    comingRight: comingRight
+
+    GridLayout:
+        id: board
+        cols: 10
+        rows: 10
+        spacing: 2, 2
+        padding: 20, 50, 20, 0
+        do_translation_x: False
+        do_translation_y: False
+
+    GridLayout:
+        cols: 3
+        rows: 1
+        spacing: 10, 10
+        size_hint: 1, 0.3
+        ScatterLayout:
+            id: comingLeft
+        ScatterLayout:
+            id: comingMid
+        ScatterLayout:
+            id: comingRight
