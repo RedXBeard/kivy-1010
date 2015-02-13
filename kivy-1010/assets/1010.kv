@@ -21,19 +21,48 @@
         id: board
         cols: 10
         rows: 10
-        spacing: 2, 2
-        padding: 20, 50, 20, 0
+        spacing: 3, 3
+        padding: 80, 50, 0, 0
         do_translation_x: False
         do_translation_y: False
 
-    GridLayout:
-        cols: 3
-        rows: 1
-        spacing: 10, 10
-        size_hint: 1, 0.3
-        ScatterLayout:
+    FloatLayout:
+        size_hint: 1, 0.5
+        canvas.before:
+            Color:
+                rgba: 1,1,1,1
+            Rectangle:
+                pos: self.pos[0], self.pos[1]
+                size: self.size
+        Scatter:
+            canvas.before:
+                Color:
+                    rgba: get_color_from_hex('E2DDD5')
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
             id: comingLeft
-        ScatterLayout:
+            size_hint: None, None
+            pos: 20, 70
+
+        Scatter:
+            canvas.before:
+                Color:
+                    rgba: get_color_from_hex('E2DDD5')
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
             id: comingMid
-        ScatterLayout:
+            size_hint: None, None
+            pos: 190, 70
+
+        Scatter:
+            canvas.before:
+                Color:
+                    rgba: get_color_from_hex('E2DDD5')
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
             id: comingRight
+            size_hint: None, None
+            pos: 360, 70
