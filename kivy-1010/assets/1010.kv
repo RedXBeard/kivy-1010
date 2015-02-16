@@ -34,7 +34,7 @@
             Rectangle:
                 pos: self.pos[0], self.pos[1]
                 size: self.size
-        ScatterLayout:
+        CustomScatter:
             canvas.before:
                 Color:
                     rgba: get_color_from_hex('E2DDD5')
@@ -43,9 +43,9 @@
                     size: self.size
             id: comingLeft
             size_hint: None, None
-            pos: 20, 70
+            pos: 25, 70
 
-        ScatterLayout:
+        CustomScatter:
             canvas.before:
                 Color:
                     rgba: get_color_from_hex('E2DDD5')
@@ -54,9 +54,9 @@
                     size: self.size
             id: comingMid
             size_hint: None, None
-            pos: 190, 70
+            pos: 195, 70
 
-        ScatterLayout:
+        CustomScatter:
             canvas.before:
                 Color:
                     rgba: get_color_from_hex('E2DDD5')
@@ -65,4 +65,4 @@
                     size: self.size
             id: comingRight
             size_hint: None, None
-            pos: 360, 70
+            pos: 365, 70

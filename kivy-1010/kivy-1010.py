@@ -4,7 +4,7 @@ from kivy.utils import get_color_from_hex
 from kivy.core.window import Window
 from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
-from kivy.uix.scatterlayout import Scatter
+from kivy.uix.scatterlayout import ScatterLayout
 from kivy.uix.image import Image
 from kivy.config import Config
 from random import randint
@@ -58,15 +58,25 @@ class Shape(GridLayout):
         self.color = color
 
 
-class CustomScatter(Scatter):
+class CustomScatter(ScatterLayout):
     def on_transform_with_touch(self, touch):
         super(CustomScatter, self).on_transform_with_touch(touch)
+        shape = self.children[0].children[0]
+        for label in shape.children:
+            label.size = (30, 30)
+        shape.width = shape.height = 32
+        shape.spacing = (2, 2)
 
     def on_bring_to_front(self, touch):
         super(CustomScatter, self).on_bring_to_front(touch)
 
     def on_touch_up(self, touch):
         super(CustomScatter, self).on_touch_up(touch)
+        shape = self.children[0].children[0]
+        for label in shape.children:
+            label.size = (25, 25)
+        shape.width = shape.height = 26
+        shape.spacing = (1, 1)
 
     def on_touch_down(self, touch):
         super(CustomScatter, self).on_touch_down(touch)
@@ -97,19 +107,19 @@ class Kivy1010(GridLayout):
             index = 0
             for i in shape.array:
                 if i == 1:
-                    box = Label(size_hint=(None, None), size=(30, 30))
+                    box = Label(size_hint=(None, None), size=(25, 25))
                     color = filter(lambda x: str(x).find('Color') != -1, box.canvas.before.children)[0]
                     color.rgba = shape.color
                 else:
-                    box = Image(source='assets/trans.png', size_hint=(None, None), size=(30, 30))
+                    box = Image(source='assets/trans.png', size_hint=(None, None), size=(25, 25))
                 index += 1
                 if index % shape.cols == 0:
-                    height += 32
+                    height += 26
 
                 if index % shape.rows == 0:
-                    width += 32
+                    width += 26
                 shape.add_widget(box)
-            shape.spacing = (2, 2)
+            shape.spacing = (1, 1)
             scatter.add_widget(shape)
             scatter.size_hint = (None, None)
             scatter.size = (width, height)
