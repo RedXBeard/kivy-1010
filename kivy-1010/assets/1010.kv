@@ -7,6 +7,10 @@
         Rectangle:
             pos: self.pos
             size: self.size
+    index: root.index
+
+<Image>
+    index: root.index
 
 <Kivy1010>
     cols: 1
@@ -28,41 +32,20 @@
 
     FloatLayout:
         size_hint: 1, 0.5
-        canvas.before:
-            Color:
-                rgba: 1,1,1,1
-            Rectangle:
-                pos: self.pos[0], self.pos[1]
-                size: self.size
         CustomScatter:
-            canvas.before:
-                Color:
-                    rgba: get_color_from_hex('E2DDD5')
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
             id: comingLeft
             size_hint: None, None
             pos: 25, 70
+            pre_pos: 25, 70
 
         CustomScatter:
-            canvas.before:
-                Color:
-                    rgba: get_color_from_hex('E2DDD5')
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
             id: comingMid
             size_hint: None, None
             pos: 195, 70
+            pre_pos: 195, 70
 
         CustomScatter:
-            canvas.before:
-                Color:
-                    rgba: get_color_from_hex('E2DDD5')
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
             id: comingRight
             size_hint: None, None
             pos: 365, 70
+            pre_pos: 365, 70

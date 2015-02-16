@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.utils import get_color_from_hex
@@ -42,9 +44,16 @@ SHAPES = [dict(cols=5, rows=1, array=[1, 1, 1, 1, 1]),
                                       0, 0, 1,
                                       1, 1, 1])]
 
-COLOR = [get_color_from_hex('990000'),
-         get_color_from_hex('009900'),
-         get_color_from_hex('000099')]
+COLOR = [get_color_from_hex('DC6554'),
+         get_color_from_hex('5BBEE5'),
+         get_color_from_hex('EC9449'),
+         get_color_from_hex('FAC73D'),
+         get_color_from_hex('97DB55'),
+         get_color_from_hex('58CB85'),
+         get_color_from_hex('5AC986'),
+         get_color_from_hex('7B8ED4'),
+         get_color_from_hex('E86981'),
+         get_color_from_hex('ED954B'), ]
 
 
 class Shape(GridLayout):
@@ -56,6 +65,11 @@ class Shape(GridLayout):
         self.cols = shape['cols']
         self.array = shape['array']
         self.color = color
+
+
+def set_color(obj, color):
+    obj_color = filter(lambda x: str(x).find('Color') != -1, obj.canvas.before.children)[0]
+    obj_color.rgba = color
 
 
 class CustomScatter(ScatterLayout):
@@ -72,14 +86,76 @@ class CustomScatter(ScatterLayout):
 
     def on_touch_up(self, touch):
         super(CustomScatter, self).on_touch_up(touch)
-        shape = self.children[0].children[0]
-        for label in shape.children:
-            label.size = (25, 25)
-        shape.width = shape.height = 26
-        shape.spacing = (1, 1)
+        self.position_calculation()
+        self.check_board()
 
     def on_touch_down(self, touch):
         super(CustomScatter, self).on_touch_down(touch)
+
+    def position_calculation(self):
+        try:
+            board = self.parent.parent.board
+            labels = board.children
+            obj_x, obj_y = self.pos
+            flag = False
+            for label in labels:
+                pos_x, pos_y = label.pos
+                lbl_wid, lbl_hei = label.size
+                pos_x_check = pos_x <= obj_x <= pos_x + lbl_wid
+                pos_y_check = pos_y <= obj_y <= pos_y + lbl_hei
+                if pos_x_check and pos_y_check:
+                    self.get_colored_area(board, label)
+                    flag = True
+                    break
+            if not flag:
+                self.pos = self.pre_pos
+        except AttributeError:
+            pass
+
+    def get_colored_area(self, board, label):
+        try:
+            shape = self.children[0].children[0]
+            shape_objs = shape.children
+            shape_color = shape.color
+            label_index = board.children.index(label)
+            shape_box_on_board = []
+            occupied = False
+            for i in range(0, shape.rows):
+                row = range(label_index + i * 10, (label_index + i * 10) - shape.cols, -1)
+                row.reverse()
+                shape_box_on_board.extend(row)
+
+            # label is occupied or not?
+            index = 0
+            for i in shape_box_on_board:
+                board_label = board.children[i]
+                color = filter(lambda x: str(x).find('Color') != -1, board_label.canvas.before.children)[0]
+                if color.rgba != get_color_from_hex('E2DDD5'):
+                    if str(shape_objs[index]).find('Label') != -1:
+                        occupied = True
+                index += 1
+
+            # Set color and remove shape
+            if not occupied:
+                index = 0
+                for i in shape_objs:
+                    if str(i).find('Label') != -1:
+                        board_label = board.children[shape_box_on_board[index]]
+                        set_color(board_label, shape_color)
+
+                    index += 1
+
+                parent = self.children[0]
+                parent.clear_widgets()
+                if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
+                    parent.parent.parent.parent.coming_shapes()
+            else:
+                self.pos = self.pre_pos
+        except IndexError:
+            pass
+
+    def check_board(self):
+        pass
 
 
 class Kivy1010(GridLayout):
@@ -107,11 +183,11 @@ class Kivy1010(GridLayout):
             index = 0
             for i in shape.array:
                 if i == 1:
-                    box = Label(size_hint=(None, None), size=(25, 25))
+                    box = Label(size_hint=(None, None), size=(25, 25), index=index)
                     color = filter(lambda x: str(x).find('Color') != -1, box.canvas.before.children)[0]
                     color.rgba = shape.color
                 else:
-                    box = Image(source='assets/trans.png', size_hint=(None, None), size=(25, 25))
+                    box = Image(source='assets/trans.png', size_hint=(None, None), size=(25, 25), index=index)
                 index += 1
                 if index % shape.cols == 0:
                     height += 26
