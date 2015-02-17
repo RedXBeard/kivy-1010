@@ -21,17 +21,13 @@
     comingMid: comingMid
     comingRight: comingRight
 
-    FloatLayout:
+    Label:
+        text: 'Score: %s'%str(root.score)
+        color: get_color_from_hex('58CB85')
+        bold: True
         size_hint: 1, None
         height: 50
         pos: 10, 540
-        Label:
-            text: 'Score: %s'%str(root.score)
-            color: get_color_from_hex('58CB85')
-            bold: True
-            size_hint: 1, None
-            height: 50
-            pos: 10, 540
 
     GridLayout:
         id: board

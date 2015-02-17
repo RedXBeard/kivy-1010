@@ -83,7 +83,6 @@ class CustomScatter(ScatterLayout):
         shape = self.children[0].children[0]
         for label in shape.children:
             label.size = (30, 30)
-        shape.width = shape.height = 33
         shape.spacing = (3, 3)
 
     def on_bring_to_front(self, touch):
@@ -102,7 +101,6 @@ class CustomScatter(ScatterLayout):
             shape = self.children[0].children[0]
             for label in shape.children:
                 label.size = (25, 25)
-            shape.width = shape.height = 27
             shape.spacing = (1, 1)
         except IndexError:
             pass
@@ -128,13 +126,12 @@ class CustomScatter(ScatterLayout):
                         flag = True
                         break
             if not flag:
-                anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
-                anim.start(self)
-                self.pos = self.pre_pos
+                raise IndexError
         except AttributeError:
             pass
         except IndexError:
-            pass
+            anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
+            anim.start(self)
 
     def get_colored_area(self, board, label):
         try:
@@ -148,7 +145,6 @@ class CustomScatter(ScatterLayout):
                 row = range(label_index + i * 10, (label_index + i * 10) - shape.cols, -1)
                 row.reverse()
                 shape_box_on_board.extend(row)
-
             # label is occupied or not?
             index = 0
             for i in shape_box_on_board:
@@ -181,11 +177,10 @@ class CustomScatter(ScatterLayout):
                 if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
                     root_class.coming_shapes()
             else:
-                anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
-                anim.start(self)
-                self.pos = self.pre_pos
+                raise IndexError
         except IndexError:
-            pass
+            anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
+            anim.start(self)
 
     def update_score(self, scored_class, point):
         if point > 0:
