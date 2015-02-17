@@ -255,7 +255,7 @@ class CustomScatter(ScatterLayout):
                 shape_box_on_board = shape_on_box(shape, label_index)
                 occupied = check_occupied(board, shape_box_on_board, shape_objs)
                 if occupied:
-                    raise
+                    raise IndexError
                 place = True
                 break
             except:
