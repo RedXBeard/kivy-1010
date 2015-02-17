@@ -22,13 +22,31 @@
     comingMid: comingMid
     comingRight: comingRight
 
-    Label:
-        text: 'Score: %s'%str(root.score)
-        color: get_color_from_hex('58CB85')
-        bold: True
+    GridLayout:
+        cols: 2
+        rows: 1
         size_hint: 1, None
         height: 50
-        pos: 10, 540
+        Label:
+            text: 'Score:'
+            color: get_color_from_hex('58CB85')
+            bold: True
+            size_hint: 1, None
+            height: 50
+            pos: 10, 540
+            font_size: 20
+            text_size: self.width, None
+            halign: 'right'
+        Label:
+            text: '%s'%str(root.score)
+            color: get_color_from_hex('58CB85')
+            bold: True
+            size_hint: 1, None
+            height: 50
+            pos: 10, 540
+            font_size: 20
+            text_size: self.width, None
+            halign: 'left'
 
     GridLayout:
         id: board

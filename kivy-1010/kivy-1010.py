@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from random import randint
+
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.utils import get_color_from_hex
@@ -11,8 +13,6 @@ from kivy.uix.image import Image
 from kivy.config import Config
 from kivy.clock import Clock
 from kivy.animation import Animation
-from random import randint
-
 from kivy.properties import NumericProperty
 
 
@@ -58,7 +58,7 @@ COLOR = [get_color_from_hex('DC6554'),
          get_color_from_hex('5AC986'),
          get_color_from_hex('7B8ED4'),
          get_color_from_hex('E86981'),
-         get_color_from_hex('ED954B'), ]
+         get_color_from_hex('ED954B')]
 
 
 def get_color(obj):
@@ -73,19 +73,23 @@ def set_color(obj, color):
 
 def shape_on_box(shape, label_index):
     shape_box_on_board = []
-    for i in range(0, shape.rows):
-        row = range(label_index + i * 10, (label_index + i * 10) - shape.cols, -1)
-        row.reverse()
-        shape_box_on_board.extend(row)
+    line_left = (label_index / 10) * 10
+    if shape.cols <= (label_index - line_left + 1):
+        for i in range(0, shape.rows):
+            row = range(label_index + i * 10, (label_index + i * 10) - shape.cols, -1)
+            row.reverse()
+            shape_box_on_board.extend(row)
     return shape_box_on_board
 
 
 def check_occupied(board, board_row, shape_objs):
     occupied = False
+    if not board_row:
+        occupied = True
     index = 0
     for i in board_row:
         board_label = board.children[i]
-        color = filter(lambda x: str(x).find('Color') != -1, board_label.canvas.before.children)[0]
+        color = get_color(board_label)
         if color.rgba != get_color_from_hex('E2DDD5'):
             if str(shape_objs[index]).find('Label') != -1:
                 occupied = True
@@ -136,6 +140,13 @@ class Shape(GridLayout):
         self.cols = shape['cols']
         self.array = shape['array']
         self.color = color
+
+    def get_colors(self, *args):
+        result = []
+        for ch in self.children:
+            if str(ch).find('Label') != -1:
+                result.append(get_color(ch))
+        return result
 
 
 class CustomAnimation(Animation):
@@ -308,8 +319,10 @@ class Kivy1010(GridLayout):
             for i in shape.array:
                 if i == 1:
                     box = Label(size_hint=(None, None), size=(25, 25), index=index)
-                    color = filter(lambda x: str(x).find('Color') != -1, box.canvas.before.children)[0]
-                    color.rgba = shape.color
+                    set_color(box, get_color_from_hex('F0F0F0'))
+
+                    # color = filter(lambda x: str(x).find('Color') != -1, box.canvas.before.children)[0]
+                    #color.rgba = shape.color
                 else:
                     box = Image(source='assets/trans.png', size_hint=(None, None), size=(25, 25), index=index)
                 index += 1
@@ -323,8 +336,12 @@ class Kivy1010(GridLayout):
             scatter.size_hint = (None, None)
             scatter.size = (width, height)
             scatter.add_widget(shape)
-            anim = Animation(d=.5)
-            anim.start(scatter)
+            label_colors = shape.get_colors()
+            for color in label_colors:
+                anim = CustomAnimation(rgba=shape.color, d=.3, t='in_circ')
+                anim.start(color)
+
+                #shape.set_color()
 
 
 class KivyMinesApp(App):
