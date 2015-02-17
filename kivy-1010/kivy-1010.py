@@ -93,6 +93,40 @@ def check_occupied(board, board_row, shape_objs):
     return occupied
 
 
+def get_lines(indexes):
+    lines = []
+    for i in indexes:
+        tmp_cols = range(i % 10, 100, 10)
+        tmp_rows = range((i / 10) * 10, (i / 10) * 10 + 10, 1)
+        try:
+            lines.index(tmp_cols)
+        except ValueError:
+            lines.append(tmp_cols)
+        try:
+            lines.index(tmp_rows)
+        except ValueError:
+            lines.append(tmp_rows)
+    return lines
+
+
+def free_positions(board, shape):
+    pos_on_board = filter(lambda x: get_color(x).rgba == get_color_from_hex('E2DDD5'), board.children)
+    place = None
+    for pos in pos_on_board:
+        label_index = board.children.index(pos)
+        shape_objs = shape.children
+        try:
+            shape_box_on_board = shape_on_box(shape, label_index)
+            occupied = check_occupied(board, shape_box_on_board, shape_objs)
+            if occupied:
+                raise IndexError
+            place = True
+            break
+        except:
+            pass
+    return bool(place)
+
+
 class Shape(GridLayout):
     def __init__(self):
         super(Shape, self).__init__()
@@ -102,6 +136,23 @@ class Shape(GridLayout):
         self.cols = shape['cols']
         self.array = shape['array']
         self.color = color
+
+
+class CustomAnimation(Animation):
+    def on_complete(self, widget):
+        super(CustomAnimation, self).stop(widget)
+        self.stop(widget)
+        if str(widget).find('Color') == -1:
+            scatters = widget.parent
+            active_shapes = map(lambda x: x[0],
+                                filter(lambda x: x, map(lambda x: x.children[0].children, scatters.children)))
+
+            possible_places = False
+            for shape in active_shapes:
+                result = free_positions(scatters.parent.board, shape)
+                possible_places = possible_places or result
+            if not possible_places:
+                CustomScatter.change_movement(scatters.parent)
 
 
 class CustomScatter(ScatterLayout):
@@ -159,7 +210,7 @@ class CustomScatter(ScatterLayout):
         except AttributeError:
             pass
         except IndexError:
-            anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
+            anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
 
     def get_colored_area(self, board, label, **kwargs):
@@ -188,44 +239,20 @@ class CustomScatter(ScatterLayout):
                 parent.clear_widgets()
                 root_class = parent.parent.parent.parent
                 Clock.schedule_once(lambda dt: self.update_score(root_class, plus_score), .01)
-                lines = self.get_lines(board_labels)
+                lines = get_lines(board_labels)
                 self.clear_lines(lines)
                 if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
                     root_class.coming_shapes()
-                active_shapes = map(lambda x: x[0], filter(lambda x: x, map(lambda x: x.children[0].children,
-                                                                            parent.parent.parent.children)))
-
-                possible_places = False
-                for shape in active_shapes:
-                    result = self.free_positions(shape)
-                    possible_places = possible_places or result
-                if not possible_places:
-                    CustomScatter.change_movement(board.parent)
             else:
                 raise IndexError
         except IndexError:
-            anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
+            anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
 
     def update_score(self, scored_class, point):
         if point > 0:
             scored_class.score += 1
             Clock.schedule_once(lambda dt: self.update_score(scored_class, point - 1), .01)
-
-    def get_lines(self, indexes):
-        lines = []
-        for i in indexes:
-            tmp_cols = range(i % 10, 100, 10)
-            tmp_rows = range((i / 10) * 10, (i / 10) * 10 + 10, 1)
-            try:
-                lines.index(tmp_cols)
-            except ValueError:
-                lines.append(tmp_cols)
-            try:
-                lines.index(tmp_rows)
-            except ValueError:
-                lines.append(tmp_rows)
-        return lines
 
     def clear_lines(self, lines):
         board = self.parent.parent.board
@@ -241,26 +268,9 @@ class CustomScatter(ScatterLayout):
                     break
             if flag:
                 for i in colored_labels:
-                    i.rgba = get_color_from_hex('E2DDD5')
+                    anim = CustomAnimation(rgba=get_color_from_hex('E2DDD5'), d=.5, t='in_circ')
+                    anim.start(i)
                 Clock.schedule_once(lambda dt: self.update_score(board.parent, 10), .01)
-
-    def free_positions(self, shape):
-        board = self.parent.parent.board
-        pos_on_board = filter(lambda x: get_color(x).rgba == get_color_from_hex('E2DDD5'), board.children)
-        place = None
-        for pos in pos_on_board:
-            label_index = board.children.index(pos)
-            shape_objs = shape.children
-            try:
-                shape_box_on_board = shape_on_box(shape, label_index)
-                occupied = check_occupied(board, shape_box_on_board, shape_objs)
-                if occupied:
-                    raise IndexError
-                place = True
-                break
-            except:
-                pass
-        return bool(place)
 
     @staticmethod
     def change_movement(board):
@@ -310,9 +320,11 @@ class Kivy1010(GridLayout):
                     width += 26
                 shape.add_widget(box)
             shape.spacing = (1, 1)
-            scatter.add_widget(shape)
             scatter.size_hint = (None, None)
             scatter.size = (width, height)
+            scatter.add_widget(shape)
+            anim = Animation(d=.5)
+            anim.start(scatter)
 
 
 class KivyMinesApp(App):
