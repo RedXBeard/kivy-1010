@@ -10,6 +10,7 @@ from kivy.uix.scatterlayout import ScatterLayout
 from kivy.uix.image import Image
 from kivy.config import Config
 from kivy.clock import Clock
+from kivy.animation import Animation
 from random import randint
 
 from kivy.properties import NumericProperty
@@ -82,8 +83,8 @@ class CustomScatter(ScatterLayout):
         shape = self.children[0].children[0]
         for label in shape.children:
             label.size = (30, 30)
-        shape.width = shape.height = 32
-        shape.spacing = (2, 2)
+        shape.width = shape.height = 33
+        shape.spacing = (3, 3)
 
     def on_bring_to_front(self, touch):
         super(CustomScatter, self).on_bring_to_front(touch)
@@ -118,12 +119,21 @@ class CustomScatter(ScatterLayout):
                 pos_x_check = pos_x <= obj_x <= pos_x + lbl_wid
                 pos_y_check = pos_y <= obj_y <= pos_y + lbl_hei
                 if pos_x_check and pos_y_check:
-                    self.get_colored_area(board, label)
-                    flag = True
-                    break
+                    # position is possible or not?
+                    lbl_index = board.children.index(label)
+                    line_left = (lbl_index / 10) * 10
+                    shape = self.children[0].children[0]
+                    if shape.cols <= (lbl_index - line_left + 1):
+                        self.get_colored_area(board, label)
+                        flag = True
+                        break
             if not flag:
+                anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
+                anim.start(self)
                 self.pos = self.pre_pos
         except AttributeError:
+            pass
+        except IndexError:
             pass
 
     def get_colored_area(self, board, label):
@@ -171,6 +181,8 @@ class CustomScatter(ScatterLayout):
                 if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
                     root_class.coming_shapes()
             else:
+                anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
+                anim.start(self)
                 self.pos = self.pre_pos
         except IndexError:
             pass
