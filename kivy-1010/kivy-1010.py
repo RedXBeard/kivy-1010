@@ -9,7 +9,11 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.scatterlayout import ScatterLayout
 from kivy.uix.image import Image
 from kivy.config import Config
+from kivy.clock import Clock
 from random import randint
+
+from kivy.properties import NumericProperty
+
 
 SHAPES = [dict(cols=5, rows=1, array=[1, 1, 1, 1, 1]),
           dict(cols=4, rows=1, array=[1, 1, 1, 1]),
@@ -86,11 +90,21 @@ class CustomScatter(ScatterLayout):
 
     def on_touch_up(self, touch):
         super(CustomScatter, self).on_touch_up(touch)
+        self.reset_shape()
         self.position_calculation()
-        self.check_board()
 
     def on_touch_down(self, touch):
         super(CustomScatter, self).on_touch_down(touch)
+
+    def reset_shape(self):
+        try:
+            shape = self.children[0].children[0]
+            for label in shape.children:
+                label.size = (25, 25)
+            shape.width = shape.height = 27
+            shape.spacing = (1, 1)
+        except IndexError:
+            pass
 
     def position_calculation(self):
         try:
@@ -137,28 +151,71 @@ class CustomScatter(ScatterLayout):
 
             # Set color and remove shape
             if not occupied:
-                index = 0
+                index = plus_score = 0
+                board_labels = []
                 for i in shape_objs:
                     if str(i).find('Label') != -1:
                         board_label = board.children[shape_box_on_board[index]]
                         set_color(board_label, shape_color)
+                        plus_score += 1
+                        board_labels.append(shape_box_on_board[index])
 
                     index += 1
 
                 parent = self.children[0]
                 parent.clear_widgets()
+                root_class = parent.parent.parent.parent
+                Clock.schedule_once(lambda dt: self.update_score(root_class, plus_score), .01)
+                lines = self.get_lines(board_labels)
+                self.clear_lines(lines)
                 if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
-                    parent.parent.parent.parent.coming_shapes()
+                    root_class.coming_shapes()
             else:
                 self.pos = self.pre_pos
         except IndexError:
             pass
 
-    def check_board(self):
-        pass
+    def update_score(self, scored_class, point):
+        if point > 0:
+            scored_class.score += 1
+            Clock.schedule_once(lambda dt: self.update_score(scored_class, point - 1), .01)
+
+    def get_lines(self, indexes):
+        lines = []
+        for i in indexes:
+            tmp_cols = range(i % 10, 100, 10)
+            tmp_rows = range((i / 10) * 10, (i / 10) * 10 + 10, 1)
+            try:
+                lines.index(tmp_cols)
+            except ValueError:
+                lines.append(tmp_cols)
+            try:
+                lines.index(tmp_rows)
+            except ValueError:
+                lines.append(tmp_rows)
+        return lines
+
+    def clear_lines(self, lines):
+        board = self.parent.parent.board
+        for line in lines:
+            flag = True
+            colored_labels = []
+            for index in line:
+                label = board.children[index]
+                color = filter(lambda x: str(x).find('Color') != -1, label.canvas.before.children)[0]
+                colored_labels.append(color)
+                if color.rgba == get_color_from_hex('E2DDD5'):
+                    flag = False
+                    break
+            if flag:
+                for i in colored_labels:
+                    i.rgba = get_color_from_hex('E2DDD5')
+                Clock.schedule_once(lambda dt: self.update_score(board.parent, 10), .01)
 
 
 class Kivy1010(GridLayout):
+    score = NumericProperty(0)
+
     def __init__(self):
         super(Kivy1010, self).__init__()
         self.refresh_board()
@@ -175,7 +232,7 @@ class Kivy1010(GridLayout):
         scatters = [self.comingLeft, self.comingMid, self.comingRight]
         for scatter in scatters:
             scatter.clear_widgets()
-
+            scatter.pos = scatter.pre_pos
         for scatter in scatters:
             shape = Shape()
             width = 0
