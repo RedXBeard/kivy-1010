@@ -5,12 +5,26 @@
         Color:
             rgba: get_color_from_hex('E2DDD5')
         Rectangle:
-            pos: self.pos
-            size: self.size
-    index: root.index
+            pos: self.pos[0], self.pos[1]+3
+            size: self.size[0], self.size[1]-6
+        Rectangle:
+            pos: self.pos[0]+3, self.pos[1]
+            size: self.size[0]-6, self.size[1]
+        Ellipse:
+            size: 6, 6
+            pos: self.pos[0], self.pos[1]
+        Ellipse:
+            size: 6, 6
+            pos: self.pos[0], self.pos[1]+self.height-6
+        Ellipse:
+            size: 6, 6
+            pos: self.pos[0]+self.width-6, self.pos[1]
+        Ellipse:
+            size: 6, 6
+            pos: self.pos[0]+self.width-6, self.pos[1]+self.height-6
+        #Line:
+        #    rounded_rectangle: self.pos[0], self.pos[1], self.size[0], self.size[1], 5, 100
 
-<Image>
-    index: root.index
 
 <Kivy1010>
     cols: 1
@@ -23,6 +37,27 @@
     comingRight: comingRight
 
     GridLayout:
+        canvas.before:
+            Color:
+                rgba: get_color_from_hex('E2DDD5')
+            Rectangle:
+                pos: self.pos[0], self.pos[1]+3
+                size: self.size[0], self.size[1]-6
+            Rectangle:
+                pos: self.pos[0]+3, self.pos[1]
+                size: self.size[0]-6, self.size[1]
+            Ellipse:
+                size: 6, 6
+                pos: self.pos[0], self.pos[1]
+            Ellipse:
+                size: 6, 6
+                pos: self.pos[0], self.pos[1]+self.height-6
+            Ellipse:
+                size: 6, 6
+                pos: self.pos[0]+self.width-6, self.pos[1]
+            Ellipse:
+                size: 6, 6
+                pos: self.pos[0]+self.width-6, self.pos[1]+self.height-6
         cols: 2
         rows: 1
         size_hint: 1, None

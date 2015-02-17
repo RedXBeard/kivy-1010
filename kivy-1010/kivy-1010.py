@@ -306,7 +306,6 @@ class Kivy1010(GridLayout):
             self.board.add_widget(label)
 
     def coming_shapes(self):
-
         scatters = [self.comingLeft, self.comingMid, self.comingRight]
         for scatter in scatters:
             scatter.clear_widgets()
@@ -318,13 +317,13 @@ class Kivy1010(GridLayout):
             index = 0
             for i in shape.array:
                 if i == 1:
-                    box = Label(size_hint=(None, None), size=(25, 25), index=index)
+                    box = Label(size_hint=(None, None), size=(25, 25))
                     set_color(box, get_color_from_hex('F0F0F0'))
 
                     # color = filter(lambda x: str(x).find('Color') != -1, box.canvas.before.children)[0]
                     #color.rgba = shape.color
                 else:
-                    box = Image(source='assets/trans.png', size_hint=(None, None), size=(25, 25), index=index)
+                    box = Image(source='assets/trans.png', size_hint=(None, None), size=(25, 25))
                 index += 1
                 if index % shape.cols == 0:
                     height += 26
