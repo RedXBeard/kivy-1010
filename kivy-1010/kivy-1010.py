@@ -61,6 +61,38 @@ COLOR = [get_color_from_hex('DC6554'),
          get_color_from_hex('ED954B'), ]
 
 
+def get_color(obj):
+    obj_color = filter(lambda x: str(x).find('Color') != -1, obj.canvas.before.children)[0]
+    return obj_color
+
+
+def set_color(obj, color):
+    obj_color = get_color(obj)
+    obj_color.rgba = color
+
+
+def shape_on_box(shape, label_index):
+    shape_box_on_board = []
+    for i in range(0, shape.rows):
+        row = range(label_index + i * 10, (label_index + i * 10) - shape.cols, -1)
+        row.reverse()
+        shape_box_on_board.extend(row)
+    return shape_box_on_board
+
+
+def check_occupied(board, board_row, shape_objs):
+    occupied = False
+    index = 0
+    for i in board_row:
+        board_label = board.children[i]
+        color = filter(lambda x: str(x).find('Color') != -1, board_label.canvas.before.children)[0]
+        if color.rgba != get_color_from_hex('E2DDD5'):
+            if str(shape_objs[index]).find('Label') != -1:
+                occupied = True
+        index += 1
+    return occupied
+
+
 class Shape(GridLayout):
     def __init__(self):
         super(Shape, self).__init__()
@@ -72,18 +104,14 @@ class Shape(GridLayout):
         self.color = color
 
 
-def set_color(obj, color):
-    obj_color = filter(lambda x: str(x).find('Color') != -1, obj.canvas.before.children)[0]
-    obj_color.rgba = color
-
-
 class CustomScatter(ScatterLayout):
     def on_transform_with_touch(self, touch):
         super(CustomScatter, self).on_transform_with_touch(touch)
-        shape = self.children[0].children[0]
-        for label in shape.children:
-            label.size = (30, 30)
-        shape.spacing = (3, 3)
+        if self.do_translation_x and self.do_translation_y:
+            shape = self.children[0].children[0]
+            for label in shape.children:
+                label.size = (30, 30)
+            shape.spacing = (3, 3)
 
     def on_bring_to_front(self, touch):
         super(CustomScatter, self).on_bring_to_front(touch)
@@ -98,10 +126,11 @@ class CustomScatter(ScatterLayout):
 
     def reset_shape(self):
         try:
-            shape = self.children[0].children[0]
-            for label in shape.children:
-                label.size = (25, 25)
-            shape.spacing = (1, 1)
+            if self.do_translation_x and self.do_translation_y:
+                shape = self.children[0].children[0]
+                for label in shape.children:
+                    label.size = (25, 25)
+                shape.spacing = (1, 1)
         except IndexError:
             pass
 
@@ -133,27 +162,14 @@ class CustomScatter(ScatterLayout):
             anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
 
-    def get_colored_area(self, board, label):
+    def get_colored_area(self, board, label, **kwargs):
         try:
-            shape = self.children[0].children[0]
+            shape = kwargs.get('shape', self.children[0].children[0])
             shape_objs = shape.children
             shape_color = shape.color
             label_index = board.children.index(label)
-            shape_box_on_board = []
-            occupied = False
-            for i in range(0, shape.rows):
-                row = range(label_index + i * 10, (label_index + i * 10) - shape.cols, -1)
-                row.reverse()
-                shape_box_on_board.extend(row)
-            # label is occupied or not?
-            index = 0
-            for i in shape_box_on_board:
-                board_label = board.children[i]
-                color = filter(lambda x: str(x).find('Color') != -1, board_label.canvas.before.children)[0]
-                if color.rgba != get_color_from_hex('E2DDD5'):
-                    if str(shape_objs[index]).find('Label') != -1:
-                        occupied = True
-                index += 1
+            shape_box_on_board = shape_on_box(shape, label_index)
+            occupied = check_occupied(board, shape_box_on_board, shape_objs)
 
             # Set color and remove shape
             if not occupied:
@@ -176,6 +192,15 @@ class CustomScatter(ScatterLayout):
                 self.clear_lines(lines)
                 if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
                     root_class.coming_shapes()
+                active_shapes = map(lambda x: x[0], filter(lambda x: x, map(lambda x: x.children[0].children,
+                                                                            parent.parent.parent.children)))
+
+                possible_places = False
+                for shape in active_shapes:
+                    result = self.free_positions(shape)
+                    possible_places = possible_places or result
+                if not possible_places:
+                    CustomScatter.change_movement(board.parent)
             else:
                 raise IndexError
         except IndexError:
@@ -218,6 +243,31 @@ class CustomScatter(ScatterLayout):
                 for i in colored_labels:
                     i.rgba = get_color_from_hex('E2DDD5')
                 Clock.schedule_once(lambda dt: self.update_score(board.parent, 10), .01)
+
+    def free_positions(self, shape):
+        board = self.parent.parent.board
+        pos_on_board = filter(lambda x: get_color(x).rgba == get_color_from_hex('E2DDD5'), board.children)
+        place = None
+        for pos in pos_on_board:
+            label_index = board.children.index(pos)
+            shape_objs = shape.children
+            try:
+                shape_box_on_board = shape_on_box(shape, label_index)
+                occupied = check_occupied(board, shape_box_on_board, shape_objs)
+                if occupied:
+                    raise
+                place = True
+                break
+            except:
+                pass
+        return bool(place)
+
+    @staticmethod
+    def change_movement(board):
+        scatters = [board.comingLeft, board.comingMid, board.comingRight]
+        for scatter in scatters:
+            scatter.do_translation_x = not scatter.do_translation_x
+            scatter.do_translation_y = not scatter.do_translation_y
 
 
 class Kivy1010(GridLayout):
