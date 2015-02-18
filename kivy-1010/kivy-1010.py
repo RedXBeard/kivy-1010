@@ -1,19 +1,24 @@
 # -*- coding: utf-8 -*-
 
 from random import randint
-
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.utils import get_color_from_hex
 from kivy.core.window import Window
 from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scatterlayout import ScatterLayout
 from kivy.uix.image import Image
 from kivy.config import Config
 from kivy.clock import Clock
 from kivy.animation import Animation
+from kivy.uix.popup import Popup
+from kivy.uix.button import Button
+
 from kivy.properties import NumericProperty
+
+from config import DB
 
 
 SHAPES = [dict(cols=5, rows=1, array=[1, 1, 1, 1, 1]),
@@ -141,7 +146,7 @@ class Shape(GridLayout):
         self.array = shape['array']
         self.color = color
 
-    def get_colors(self, *args):
+    def get_colors(self):
         result = []
         for ch in self.children:
             if str(ch).find('Label') != -1:
@@ -150,20 +155,27 @@ class Shape(GridLayout):
 
 
 class CustomAnimation(Animation):
+    def __init__(self, wait_for=0, *args, **kwargs):
+        super(CustomAnimation, self).__init__(*args, **kwargs)
+        self.wait_for = wait_for
+
     def on_complete(self, widget):
         super(CustomAnimation, self).stop(widget)
-        self.stop(widget)
         if str(widget).find('Color') == -1:
-            scatters = widget.parent
-            active_shapes = map(lambda x: x[0],
-                                filter(lambda x: x, map(lambda x: x.children[0].children, scatters.children)))
+            if self.wait_for > 0:
+                self.wait_for -= 1
+            if self.wait_for == 0:
+                scatters = widget.parent
+                active_shapes = map(lambda x: x[0],
+                                    filter(lambda x: x, map(lambda x: x.children[0].children, scatters.children)))
 
-            possible_places = False
-            for shape in active_shapes:
-                result = free_positions(scatters.parent.board, shape)
-                possible_places = possible_places or result
-            if not possible_places:
-                CustomScatter.change_movement(scatters.parent)
+                possible_places = False
+                for shape in active_shapes:
+                    result = free_positions(scatters.parent.board, shape)
+                    possible_places = possible_places or result
+                if not possible_places:
+                    CustomScatter.change_movement(scatters.parent)
+                self.wait_for = -1
 
 
 class CustomScatter(ScatterLayout):
@@ -221,7 +233,12 @@ class CustomScatter(ScatterLayout):
         except AttributeError:
             pass
         except IndexError:
-            anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
+            try:
+                shape = self.children[0].children[0]
+            except IndexError:
+                shape = None
+            anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear',
+                                   duration=.2, wait_for=shape and shape.cols * shape.rows or 0)
             anim.start(self)
 
     def get_colored_area(self, board, label, **kwargs):
@@ -257,7 +274,12 @@ class CustomScatter(ScatterLayout):
             else:
                 raise IndexError
         except IndexError:
-            anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
+            try:
+                shape = self.children[0].children[0]
+            except IndexError:
+                shape = None
+            anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear',
+                                   duration=.2, wait_for=shape and shape.cols * shape.rows or 0)
             anim.start(self)
 
     def update_score(self, scored_class, point):
@@ -278,8 +300,9 @@ class CustomScatter(ScatterLayout):
                     flag = False
                     break
             if flag:
+                board.parent.wait_for = 10
                 for i in colored_labels:
-                    anim = CustomAnimation(rgba=get_color_from_hex('E2DDD5'), d=.5, t='in_circ')
+                    anim = CustomAnimation(rgba=get_color_from_hex('E2DDD5'), d=.2, t='in_circ', wait_for=10)
                     anim.start(i)
                 Clock.schedule_once(lambda dt: self.update_score(board.parent, 10), .01)
 
@@ -289,15 +312,61 @@ class CustomScatter(ScatterLayout):
         for scatter in scatters:
             scatter.do_translation_x = not scatter.do_translation_x
             scatter.do_translation_y = not scatter.do_translation_y
+        board.set_record()
+        if not board.popup:
+            board.create_popup('REPLAY')
 
 
 class Kivy1010(GridLayout):
     score = NumericProperty(0)
+    wait_for = NumericProperty(-1)
+    popup = None
 
     def __init__(self):
         super(Kivy1010, self).__init__()
+        self.popup = None
+        self.create_popup()
+
+    def go(self, *args):
+        self.score = 0
+        self.popup.dismiss()
+        self.popup = None
         self.refresh_board()
         self.coming_shapes()
+
+    def create_popup(self, button_text='PLAY'):
+        button = Button(text=button_text, background_color=get_color_from_hex('58CB85'))
+        button.bind(on_press=self.go)
+        boxlayout = BoxLayout(orientation='vertical')
+        set_color(boxlayout, get_color_from_hex('E2DDD5'))
+        label1 = Label(text='HIGH SCORE', color=get_color_from_hex('ED954B'), bold=True)
+        label2 = Label(text=str(self.get_record()), color=get_color_from_hex('ED954B'), bold=True)
+        boxlayout.add_widget(label1)
+        boxlayout.add_widget(label2)
+        layout = GridLayout(cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
+        layout.add_widget(button)
+        layout.add_widget(boxlayout)
+        self.popup = Popup(content=layout, size_hint=(None, None), size=(200, 300), title='Kivy 1010',
+                           title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
+                           separator_color=get_color_from_hex('7B8ED4'), separator_height=5)
+        self.popup.open()
+
+    def set_record(self):
+        try:
+            high_score = DB.store_get('high_score')
+        except KeyError:
+            high_score = 0
+
+        if high_score < self.score:
+            DB.store_put('high_score', self.score)
+        DB.store_sync()
+
+    def get_record(self):
+        try:
+            high_score = DB.store_get('high_score')
+        except KeyError:
+            high_score = 0
+        return high_score
 
     def refresh_board(self):
         self.board.clear_widgets()
@@ -319,9 +388,6 @@ class Kivy1010(GridLayout):
                 if i == 1:
                     box = Label(size_hint=(None, None), size=(25, 25))
                     set_color(box, get_color_from_hex('F0F0F0'))
-
-                    # color = filter(lambda x: str(x).find('Color') != -1, box.canvas.before.children)[0]
-                    #color.rgba = shape.color
                 else:
                     box = Image(source='assets/trans.png', size_hint=(None, None), size=(25, 25))
                 index += 1
@@ -336,11 +402,11 @@ class Kivy1010(GridLayout):
             scatter.size = (width, height)
             scatter.add_widget(shape)
             label_colors = shape.get_colors()
+            self.wait_for = -1
             for color in label_colors:
-                anim = CustomAnimation(rgba=shape.color, d=.3, t='in_circ')
+                self.wait_for += shape.cols * shape.rows
+                anim = CustomAnimation(rgba=shape.color, d=.2, t='in_circ', wait_for=shape.cols * shape.rows)
                 anim.start(color)
-
-                #shape.set_color()
 
 
 class KivyMinesApp(App):
