@@ -350,6 +350,7 @@ class Kivy1010(GridLayout):
         DB.store_sync()
 
     def go(self, *args):
+        self.high_score = self.get_record()
         self.score = 0
         self.popup.dismiss()
         self.popup = None
@@ -451,6 +452,8 @@ class Kivy1010(GridLayout):
             scatter.size = (width, height)
             scatter.add_widget(shape)
             label_colors = shape.get_colors()
+            scatter.do_translation_y = True
+            scatter.do_translation_x = True
             self.wait_for = -1
             for color in label_colors:
                 self.wait_for += shape.cols * shape.rows
