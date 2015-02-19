@@ -79,7 +79,7 @@
             Ellipse:
                 size: 6, 6
                 pos: self.pos[0]+self.width-6, self.pos[1]+self.height-6
-        cols: 3
+        cols: 4
         rows: 1
         size_hint: 1, None
         spacing: 4, 4
@@ -87,8 +87,8 @@
         Label:
             text: '%s'%str(root.score)
             color: get_color_from_hex('58CB85')
-            size_hint: 1, None
-            height: 50
+            size_hint: None, None
+            size: 225, 50
             font_size: 30
             text_size: self.width, None
             halign: 'right'
@@ -105,6 +105,14 @@
             font_size: 30
             text_size: self.width, None
             halign: 'left'
+        Button:
+            background_color: get_color_from_hex('5BBEE5')
+            size_hint: None, 1
+            width: 50
+            Image:
+                source: 'assets/pause_%s.png'%(root.theme == 'dark' and 'dark' or 'sun')
+                pos: self.parent.pos[0], self.parent.pos[1]+10
+                size: self.parent.size[0], self.parent.size[1]/1.5
 
     GridLayout:
         id: board
