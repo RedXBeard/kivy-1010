@@ -220,10 +220,12 @@ class CustomScatter(ScatterLayout):
             for label in labels:
                 pos_x, pos_y = label.pos
                 lbl_wid, lbl_hei = label.size
-                pos_x_check = pos_x <= obj_x <= pos_x + lbl_wid
-                pos_y_check = pos_y <= obj_y <= pos_y + lbl_hei
+                print lbl_wid, lbl_hei
+                print self.size
+                pos_x_check = pos_x - 3 <= obj_x <= pos_x + lbl_wid + 3
+                pos_y_check = pos_y - 3 <= obj_y <= pos_y + lbl_hei + 3
                 if pos_x_check and pos_y_check:
-                    # position is possible or not?
+                    # position is available or not?
                     lbl_index = board.children.index(label)
                     line_left = (lbl_index / 10) * 10
                     shape = self.children[0].children[0]
