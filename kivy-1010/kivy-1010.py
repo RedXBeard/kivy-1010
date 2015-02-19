@@ -319,11 +319,13 @@ class CustomScatter(ScatterLayout):
 
 class Kivy1010(GridLayout):
     score = NumericProperty(0)
+    high_score = NumericProperty(0)
     wait_for = NumericProperty(-1)
     popup = None
 
     def __init__(self):
         super(Kivy1010, self).__init__()
+        self.high_score = self.get_record()
         self.popup = None
         self.create_popup()
 

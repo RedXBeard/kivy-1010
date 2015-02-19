@@ -75,24 +75,27 @@
             Ellipse:
                 size: 6, 6
                 pos: self.pos[0]+self.width-6, self.pos[1]+self.height-6
-        cols: 2
+        cols: 3
         rows: 1
         size_hint: 1, None
         height: 50
         Label:
-            text: 'Score:'
+            text: '%s'%str(root.score)
             color: get_color_from_hex('58CB85')
-            bold: True
             size_hint: 1, None
             height: 50
-            pos: 10, 540
             font_size: 20
             text_size: self.width, None
             halign: 'right'
         Label:
-            text: '%s'%str(root.score)
+            text: '-'
             color: get_color_from_hex('58CB85')
-            bold: True
+            size_hint: None, None
+            size: 10, 50
+            font_size: 20
+        Label:
+            text: '%s'%str(root.high_score)
+            color: get_color_from_hex('5BBEE5')
             size_hint: 1, None
             height: 50
             pos: 10, 540
