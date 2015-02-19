@@ -9,15 +9,16 @@
             size: self.size
 
 <Button>
-    color: get_color_from_hex('E2DDD5')
     bold: True
     background_normal: ""
 	background_down: ""
 	background_disabled_down: ""
 	background_disabled_normal: ""
+	image: image
 	Image:
+	    id: image
 	    source: 'assets/play.png'
-	    pos: self.parent.pos[0]+45, self.parent.pos[1]+25
+	    pos: self.parent.pos[0]+45, self.parent.pos[1]+18
 	    size: map(lambda x: x/2, self.parent.size)
 
 <Label>

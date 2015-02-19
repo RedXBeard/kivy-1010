@@ -18,7 +18,7 @@ from kivy.uix.button import Button
 
 from kivy.properties import NumericProperty
 
-from config import DB
+from config import DB, THEME
 
 
 SHAPES = [dict(cols=5, rows=1, array=[1, 1, 1, 1, 1]),
@@ -54,27 +54,30 @@ SHAPES = [dict(cols=5, rows=1, array=[1, 1, 1, 1, 1]),
                                       0, 0, 1,
                                       1, 1, 1])]
 
-COLOR = [get_color_from_hex('DC6554'),
-         get_color_from_hex('5BBEE5'),
-         get_color_from_hex('EC9449'),
-         get_color_from_hex('FAC73D'),
-         get_color_from_hex('97DB55'),
-         get_color_from_hex('58CB85'),
-         get_color_from_hex('5AC986'),
-         get_color_from_hex('7B8ED4'),
-         get_color_from_hex('E86981'),
-         get_color_from_hex('ED954B')]
+COLOR = [get_color_from_hex('DC6554'),  # red
+         get_color_from_hex('5BBEE5'),  # light blue
+         get_color_from_hex('EC9449'),  # orange
+         get_color_from_hex('FAC73D'),  # yellow
+         get_color_from_hex('97DB55'),  # light green
+         get_color_from_hex('5AC986'),  # dark green
+         get_color_from_hex('7B8ED4'),  # purple
+         get_color_from_hex('E86981')]  # pink
 
 
 def get_color(obj):
-    obj_color = filter(lambda x: str(x).find('Color') != -1, obj.canvas.before.children)[0]
+    try:
+        obj_color = filter(lambda x: str(x).find('Color') != -1, obj.canvas.before.children)[0]
+    except IndexError:
+        obj_color = None
     return obj_color
 
 
 def set_color(obj, color):
     obj_color = get_color(obj)
-    obj_color.rgba = color
-
+    try:
+        obj_color.rgba = color
+    except AttributeError:
+        pass
 
 def shape_on_box(shape, label_index):
     shape_box_on_board = []
@@ -95,7 +98,7 @@ def check_occupied(board, board_row, shape_objs):
     for i in board_row:
         board_label = board.children[i]
         color = get_color(board_label)
-        if color.rgba != get_color_from_hex('E2DDD5'):
+        if color.rgba != board.parent.labels:
             if str(shape_objs[index]).find('Label') != -1:
                 occupied = True
         index += 1
@@ -119,7 +122,7 @@ def get_lines(indexes):
 
 
 def free_positions(board, shape):
-    pos_on_board = filter(lambda x: get_color(x).rgba == get_color_from_hex('E2DDD5'), board.children)
+    pos_on_board = filter(lambda x: get_color(x).rgba == board.parent.labels, board.children)
     place = None
     for pos in pos_on_board:
         label_index = board.children.index(pos)
@@ -296,13 +299,12 @@ class CustomScatter(ScatterLayout):
                 label = board.children[index]
                 color = filter(lambda x: str(x).find('Color') != -1, label.canvas.before.children)[0]
                 colored_labels.append(color)
-                if color.rgba == get_color_from_hex('E2DDD5'):
+                if color.rgba == board.parent.labels:
                     flag = False
                     break
             if flag:
-                board.parent.wait_for = 10
                 for i in colored_labels:
-                    anim = CustomAnimation(rgba=get_color_from_hex('E2DDD5'), d=.2, t='in_circ', wait_for=10)
+                    anim = CustomAnimation(rgba=board.parent.labels, d=.2, t='in_circ', wait_for=10)
                     anim.start(i)
                 Clock.schedule_once(lambda dt: self.update_score(board.parent, 10), .01)
 
@@ -314,20 +316,38 @@ class CustomScatter(ScatterLayout):
             scatter.do_translation_y = not scatter.do_translation_y
         board.set_record()
         if not board.popup:
-            board.create_popup('REPLAY')
+            board.create_on_end_popup()
 
 
 class Kivy1010(GridLayout):
     score = NumericProperty(0)
     high_score = NumericProperty(0)
-    wait_for = NumericProperty(-1)
+    theme = 'light'
+    background = ''
+    labels = ''
     popup = None
 
     def __init__(self):
         super(Kivy1010, self).__init__()
+        self.set_theme()
         self.high_score = self.get_record()
         self.popup = None
-        self.create_popup()
+        self.create_on_start_popup()
+
+    def change_theme(self, *args):
+        theme = filter(lambda x: x != self.theme, THEME.keys())[0]
+        self.set_theme(theme=theme)
+        self.go()
+
+    def set_theme(self, theme=None, *args):
+        if not theme:
+            theme = DB.store_get('theme')
+        self.theme = theme
+        self.background = THEME.get(theme).get('background')
+        self.labels = THEME.get(theme).get('labels')
+        Window.clearcolor = self.background
+        DB.store_put('theme', theme)
+        DB.store_sync()
 
     def go(self, *args):
         self.score = 0
@@ -336,21 +356,47 @@ class Kivy1010(GridLayout):
         self.refresh_board()
         self.coming_shapes()
 
-    def create_popup(self, button_text='PLAY'):
+    def create_on_start_popup(self):
         button = Button(background_color=get_color_from_hex('58CB85'))
         button.bind(on_press=self.go)
         boxlayout = BoxLayout(orientation='vertical')
         set_color(boxlayout, get_color_from_hex('E2DDD5'))
-        label1 = Label(text='HIGH SCORE', color=get_color_from_hex('5BBEE5'), bold=True)
-        label2 = Label(text=str(self.get_record()), color=get_color_from_hex('5BBEE5'), bold=True)
-        boxlayout.add_widget(label1)
-        boxlayout.add_widget(label2)
+        img = Image(source='assets/medal.png')
+        label = Label(text=str(self.get_record()), color=get_color_from_hex('5BBEE5'), font_size=30)
+        boxlayout.add_widget(img)
+        boxlayout.add_widget(label)
+        theme = Button(text_width=(self.width, None), halign='left')
+        theme.bind(on_press=self.change_theme)
+        theme.image.source = self.theme == 'dark' and 'assets/sun.png' or 'assets/moon.png'
         layout = GridLayout(cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
         layout.add_widget(button)
         layout.add_widget(boxlayout)
+        layout.add_widget(theme)
         self.popup = Popup(content=layout, size_hint=(None, None), size=(200, 300), title='Kivy 1010',
                            title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
-                           separator_color=get_color_from_hex('7B8ED4'), separator_height=5)
+                           separator_color=get_color_from_hex('7B8ED4'))
+        self.popup.open()
+
+    def create_on_end_popup(self):
+        label1 = Label(text='No Moves Left', color=get_color_from_hex('5BBEE5'))
+        img = Image(source='assets/medal.png')
+        label2 = Label(text=str(self.score), font_size=30, color=get_color_from_hex('5BBEE5'))
+        button = Button(background_color=get_color_from_hex('58CB85'))
+        button.bind(on_press=self.go)
+        boxlayout = BoxLayout(orientation='vertical')
+        boxlayout.add_widget(label1)
+        boxlayout.add_widget(img)
+        boxlayout.add_widget(label2)
+        theme = Button(text_width=(self.width, None), halign='left')
+        theme.bind(on_press=self.change_theme)
+        theme.image.source = self.theme == 'dark' and 'assets/sun.png' or 'assets/moon.png'
+        layout = GridLayout(cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
+        layout.add_widget(boxlayout)
+        layout.add_widget(button)
+        layout.add_widget(theme)
+        self.popup = Popup(content=layout, size_hint=(None, None), size=(200, 300), title='Kivy 1010',
+                           title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
+                           separator_color=get_color_from_hex('7B8ED4'))
         self.popup.open()
 
     def set_record(self):
@@ -374,6 +420,7 @@ class Kivy1010(GridLayout):
         self.board.clear_widgets()
         for i in range(0, 100):
             label = Label(color=(0, 0, 0, 1), size_hint=(None, None), size=(30, 30))
+            set_color(label, self.labels)
             self.board.add_widget(label)
 
     def coming_shapes(self):
@@ -389,7 +436,7 @@ class Kivy1010(GridLayout):
             for i in shape.array:
                 if i == 1:
                     box = Label(size_hint=(None, None), size=(25, 25))
-                    set_color(box, get_color_from_hex('F0F0F0'))
+                    set_color(box, self.background)
                 else:
                     box = Image(source='assets/trans.png', size_hint=(None, None), size=(25, 25))
                 index += 1
@@ -424,8 +471,8 @@ class KivyMinesApp(App):
 
 
 if __name__ == '__main__':
-    Window.clearcolor = (get_color_from_hex('F0F0F0'))
     Window.size = (520, 600)
+    Window.borderless = False
     Config.set('kivy', 'desktop', 1)
     Config.set('graphics', 'fullscreen', 0)
     Config.set('graphics', 'resizable', 0)
