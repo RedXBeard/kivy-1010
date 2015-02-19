@@ -337,12 +337,12 @@ class Kivy1010(GridLayout):
         self.coming_shapes()
 
     def create_popup(self, button_text='PLAY'):
-        button = Button(text=button_text, background_color=get_color_from_hex('58CB85'))
+        button = Button(background_color=get_color_from_hex('58CB85'))
         button.bind(on_press=self.go)
         boxlayout = BoxLayout(orientation='vertical')
         set_color(boxlayout, get_color_from_hex('E2DDD5'))
-        label1 = Label(text='HIGH SCORE', color=get_color_from_hex('ED954B'), bold=True)
-        label2 = Label(text=str(self.get_record()), color=get_color_from_hex('ED954B'), bold=True)
+        label1 = Label(text='HIGH SCORE', color=get_color_from_hex('5BBEE5'), bold=True)
+        label2 = Label(text=str(self.get_record()), color=get_color_from_hex('5BBEE5'), bold=True)
         boxlayout.add_widget(label1)
         boxlayout.add_widget(label2)
         layout = GridLayout(cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
@@ -416,7 +416,7 @@ class KivyMinesApp(App):
         super(KivyMinesApp, self).__init__(**kwargs)
         Builder.load_file('assets/1010.kv')
         self.title = 'Kivy 1010'
-        # self.icon = 'assets/mine.png'
+        self.icon = 'assets/cube.png'
 
     def build(self):
         mines = Kivy1010()

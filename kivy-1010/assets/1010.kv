@@ -11,11 +11,14 @@
 <Button>
     color: get_color_from_hex('E2DDD5')
     bold: True
-    font_size: 25
     background_normal: ""
 	background_down: ""
 	background_disabled_down: ""
 	background_disabled_normal: ""
+	Image:
+	    source: 'assets/play.png'
+	    pos: self.parent.pos[0]+45, self.parent.pos[1]+25
+	    size: map(lambda x: x/2, self.parent.size)
 
 <Label>
     canvas.before:
@@ -78,28 +81,27 @@
         cols: 3
         rows: 1
         size_hint: 1, None
+        spacing: 4, 4
         height: 50
         Label:
             text: '%s'%str(root.score)
             color: get_color_from_hex('58CB85')
             size_hint: 1, None
             height: 50
-            font_size: 20
+            font_size: 30
             text_size: self.width, None
             halign: 'right'
-        Label:
-            text: '-'
-            color: get_color_from_hex('58CB85')
+        Image:
+            source: 'assets/medal.png'
             size_hint: None, None
-            size: 10, 50
-            font_size: 20
+            size: 30, 50
         Label:
             text: '%s'%str(root.high_score)
             color: get_color_from_hex('5BBEE5')
             size_hint: 1, None
             height: 50
             pos: 10, 540
-            font_size: 20
+            font_size: 30
             text_size: self.width, None
             halign: 'left'
 
