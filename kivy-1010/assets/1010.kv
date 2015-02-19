@@ -14,11 +14,12 @@
 	background_down: ""
 	background_disabled_down: ""
 	background_disabled_normal: ""
+	from_pause: False
 	image: image
 	Image:
 	    id: image
 	    source: 'assets/play.png'
-	    pos: self.parent.pos[0]+45, self.parent.pos[1]+18
+	    pos: self.parent.pos[0]+self.parent.width/2-self.width/2, self.parent.pos[1]+self.parent.height/2-self.height/2
 	    size: map(lambda x: x/2, self.parent.size)
 
 <Label>
@@ -51,6 +52,7 @@
     cols: 1
     rows: 3
     padding: 20, 10, 20, 10
+    score_board: score_board
     board: board
     coming: coming
     comingLeft: comingLeft
@@ -79,6 +81,7 @@
             Ellipse:
                 size: 6, 6
                 pos: self.pos[0]+self.width-6, self.pos[1]+self.height-6
+        id: score_board
         cols: 4
         rows: 1
         size_hint: 1, None
@@ -105,14 +108,6 @@
             font_size: 30
             text_size: self.width, None
             halign: 'left'
-        Button:
-            background_color: get_color_from_hex('5BBEE5')
-            size_hint: None, 1
-            width: 50
-            Image:
-                source: 'assets/pause_%s.png'%(root.theme == 'dark' and 'dark' or 'sun')
-                pos: self.parent.pos[0], self.parent.pos[1]+10
-                size: self.parent.size[0], self.parent.size[1]/1.5
 
     GridLayout:
         id: board

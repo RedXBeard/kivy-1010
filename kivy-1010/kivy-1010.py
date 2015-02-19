@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from random import randint
+
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.utils import get_color_from_hex
@@ -15,9 +16,7 @@ from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
-
 from kivy.properties import NumericProperty
-
 from config import DB, THEME
 
 
@@ -339,6 +338,11 @@ class Kivy1010(GridLayout):
         self.set_theme(theme=theme)
         self.go()
 
+    def change_theme_noreset(self, args):
+        theme = filter(lambda x: x != self.theme, THEME.keys())[0]
+        self.set_theme(theme=theme)
+        self.keep_on()
+
     def set_theme(self, theme=None, *args):
         if not theme:
             theme = DB.store_get('theme')
@@ -349,7 +353,36 @@ class Kivy1010(GridLayout):
         DB.store_put('theme', theme)
         DB.store_sync()
 
+    def get_pause_but(self):
+        try:
+            button = filter(lambda x: str(x).find('Button') != -1, self.score_board.children)[0]
+            button.disabled = not self.disabled
+        except IndexError:
+            button = None
+        return button
+
+    def create_pause_but(self):
+        if not self.get_pause_but():
+            button = Button(background_color=get_color_from_hex('E2DDD5'), size_hint=(None, 1), width=50,
+                            disabled=False)
+            button.bind(on_press=self.create_on_start_popup)
+            button.image.source = 'assets/pause_%s.png' % (self.theme == 'dark' and 'dark' or 'sun')
+            self.score_board.add_widget(button)
+
+    def pause_change_disability(self):
+        button = self.get_pause_but()
+        try:
+            button.disabled = not self.disabled
+        except AttributeError:
+            pass
+
+    def remove_pause_but(self):
+        button = self.get_pause_but()
+        if button:
+            self.score_board.remove_widget(button)
+
     def go(self, *args):
+        self.create_pause_but()
         self.high_score = self.get_record()
         self.score = 0
         self.popup.dismiss()
@@ -357,28 +390,40 @@ class Kivy1010(GridLayout):
         self.refresh_board()
         self.coming_shapes()
 
-    def create_on_start_popup(self):
+    def keep_on(self, *args):
+        self.create_pause_but()
+        self.high_score = self.get_record()
+        self.popup.dismiss()
+        self.popup = None
+
+    def create_on_start_popup(self, *args):
+        self.remove_pause_but()
         button = Button(background_color=get_color_from_hex('58CB85'))
-        button.bind(on_press=self.go)
         boxlayout = BoxLayout(orientation='vertical')
         set_color(boxlayout, get_color_from_hex('E2DDD5'))
         img = Image(source='assets/medal.png')
         label = Label(text=str(self.get_record()), color=get_color_from_hex('5BBEE5'), font_size=30)
         boxlayout.add_widget(img)
         boxlayout.add_widget(label)
-        theme = Button(text_width=(self.width, None), halign='left')
-        theme.bind(on_press=self.change_theme)
-        theme.image.source = self.theme == 'dark' and 'assets/sun.png' or 'assets/moon.png'
         layout = GridLayout(cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
         layout.add_widget(button)
         layout.add_widget(boxlayout)
-        layout.add_widget(theme)
+        if args:
+            button.bind(on_press=self.keep_on)
+        else:
+            button.bind(on_press=self.go)
+            theme = Button(text_width=(self.width, None), halign='left')
+            theme.image.source = self.theme == 'dark' and 'assets/sun.png' or 'assets/moon.png'
+            theme.bind(on_press=self.change_theme)
+            layout.add_widget(theme)
+
         self.popup = Popup(content=layout, size_hint=(None, None), size=(200, 300), title='Kivy 1010',
                            title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
                            separator_color=get_color_from_hex('7B8ED4'))
         self.popup.open()
 
     def create_on_end_popup(self):
+        self.remove_pause_but()
         label1 = Label(text='No Moves Left', color=get_color_from_hex('5BBEE5'))
         img = Image(source='assets/medal.png')
         label2 = Label(text=str(self.score), font_size=30, color=get_color_from_hex('5BBEE5'))
