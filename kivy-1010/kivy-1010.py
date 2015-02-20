@@ -18,63 +18,7 @@ from kivy.uix.button import Button
 
 from kivy.properties import NumericProperty
 
-from config import DB, THEME
-
-
-SHAPES = [dict(cols=5, rows=1, array=[1, 1, 1, 1, 1]),
-          dict(cols=4, rows=1, array=[1, 1, 1, 1]),
-          dict(cols=3, rows=1, array=[1, 1, 1]),
-          dict(cols=2, rows=1, array=[1, 1]),
-          dict(cols=1, rows=5, array=[1, 1, 1, 1, 1]),
-          dict(cols=1, rows=4, array=[1, 1, 1, 1]),
-          dict(cols=1, rows=3, array=[1, 1, 1]),
-          dict(cols=1, rows=2, array=[1, 1]),
-          dict(cols=1, rows=1, array=[1]),
-
-          dict(cols=2, rows=2, array=[1, 1, 1, 1]),
-          dict(cols=3, rows=3, array=[1, 1, 1,
-                                      1, 1, 1,
-                                      1, 1, 1]),
-
-          dict(cols=2, rows=2, array=[1, 1, 0, 1]),
-          dict(cols=2, rows=2, array=[1, 0, 1, 1]),
-          dict(cols=2, rows=2, array=[1, 1, 1, 0]),
-          dict(cols=2, rows=2, array=[0, 1, 1, 1]),
-
-          dict(cols=3, rows=3, array=[1, 1, 1,
-                                      1, 0, 0,
-                                      1, 0, 0]),
-          dict(cols=3, rows=3, array=[1, 1, 1,
-                                      0, 0, 1,
-                                      0, 0, 1]),
-          dict(cols=3, rows=3, array=[1, 0, 0,
-                                      1, 0, 0,
-                                      1, 1, 1]),
-          dict(cols=3, rows=3, array=[0, 0, 1,
-                                      0, 0, 1,
-                                      1, 1, 1])]
-
-COLOR = [get_color_from_hex('DC6555'),  # red
-         get_color_from_hex('5BBEE5'),  # light blue
-         get_color_from_hex('448FC4'),
-         get_color_from_hex('6FE5FE'),
-         get_color_from_hex('50B5D5'),
-         get_color_from_hex('EC9449'),  # orange1
-         get_color_from_hex('ED954A'),  # orange2
-         get_color_from_hex('FFC658'),
-         get_color_from_hex('E57D4F'),
-         get_color_from_hex('C25041'),
-         get_color_from_hex('FF8271'),
-         get_color_from_hex('FAC73D'),  # yellow1
-         get_color_from_hex('FFC63E'),  # yellow2
-         get_color_from_hex('97DB55'),  # green1
-         get_color_from_hex('4DD5B0'),  # green2
-         get_color_from_hex('98DC55'),  # green3
-         get_color_from_hex('59CB86'),  # green4
-         get_color_from_hex('5AC986'),  # dark green
-         get_color_from_hex('7B8ED4'),  # purple1
-         get_color_from_hex('7E8ED5'),  # purple2
-         get_color_from_hex('E86981')]  # pink
+from config import DB, THEME, COLOR, SHAPES
 
 
 def get_color(obj):
@@ -136,7 +80,6 @@ def get_lines(indexes):
 
 
 def free_positions(board, shape):
-    # CHECK
     pos_on_board = filter(lambda x: not x.filled,  # get_color(x).rgba == board.parent.labels,
                           board.children)
     place = None
@@ -319,12 +262,10 @@ class CustomScatter(ScatterLayout):
                 label = board.children[index]
                 labels.append(label)
                 colored_labels.append(get_color(label))
-                # CHECK
-                if not hasattr(label, 'filled') or not label.filled:  #color.rgba == board.parent.labels:
+                if not hasattr(label, 'filled') or not label.filled:
                     flag = False
                     break
             if flag:
-                # CHECK
                 all_labels.extend(labels)
                 all_colored_labels.extend(colored_labels)
 
@@ -527,9 +468,7 @@ class Kivy1010(GridLayout):
             label_colors = shape.get_colors()
             scatter.do_translation_y = True
             scatter.do_translation_x = True
-            self.wait_for = -1
             for color in label_colors:
-                self.wait_for += shape.cols * shape.rows
                 anim = CustomAnimation(rgba=shape.color, d=.2, t='in_circ', wait_for=shape.cols * shape.rows)
                 anim.start(color)
 

@@ -42,3 +42,80 @@ THEME = {'dark': {'background': get_color_from_hex('393C3E'),
                   'labels': get_color_from_hex('D1D1D1')},
          'light': {'background': get_color_from_hex('F0F0F0'),
                    'labels': get_color_from_hex('E2DDD5')}}
+
+COLOR = [get_color_from_hex('DC6555'),  # red
+         get_color_from_hex('5BBEE5'),  # light blue
+         get_color_from_hex('448FC4'),
+         get_color_from_hex('6FE5FE'),
+         get_color_from_hex('50B5D5'),
+         get_color_from_hex('EC9449'),  # orange1
+         get_color_from_hex('ED954A'),  # orange2
+         get_color_from_hex('FFC658'),
+         get_color_from_hex('E57D4F'),
+         get_color_from_hex('C25041'),
+         get_color_from_hex('FF8271'),
+         get_color_from_hex('FAC73D'),  # yellow1
+         get_color_from_hex('FFC63E'),  # yellow2
+         get_color_from_hex('97DB55'),  # green1
+         get_color_from_hex('4DD5B0'),  # green2
+         get_color_from_hex('98DC55'),  # green3
+         get_color_from_hex('59CB86'),  # green4
+         get_color_from_hex('5AC986'),  # dark green
+         get_color_from_hex('7B8ED4'),  # purple1
+         get_color_from_hex('7E8ED5'),  # purple2
+         get_color_from_hex('E86981')]  # pink
+
+SHAPES = [dict(cols=5, rows=1, array=[1, 1, 1, 1, 1]),
+          dict(cols=4, rows=1, array=[1, 1, 1, 1]),
+          dict(cols=3, rows=1, array=[1, 1, 1]),
+          dict(cols=2, rows=1, array=[1, 1]),
+          dict(cols=1, rows=5, array=[1, 1, 1, 1, 1]),
+          dict(cols=1, rows=4, array=[1, 1, 1, 1]),
+          dict(cols=1, rows=3, array=[1, 1, 1]),
+          dict(cols=1, rows=2, array=[1, 1]),
+          dict(cols=1, rows=1, array=[1]),
+
+          dict(cols=2, rows=2, array=[1, 1, 1, 1]),
+          dict(cols=3, rows=3, array=[1, 1, 1,
+                                      1, 1, 1,
+                                      1, 1, 1]),
+
+          dict(cols=2, rows=2, array=[1, 1, 0, 1]),
+          dict(cols=2, rows=2, array=[1, 0, 1, 1]),
+          dict(cols=2, rows=2, array=[1, 1, 1, 0]),
+          dict(cols=2, rows=2, array=[0, 1, 1, 1]),
+
+          dict(cols=3, rows=3, array=[1, 1, 1,
+                                      1, 0, 0,
+                                      1, 0, 0]),
+          dict(cols=3, rows=3, array=[1, 1, 1,
+                                      0, 0, 1,
+                                      0, 0, 1]),
+          dict(cols=3, rows=3, array=[1, 0, 0,
+                                      1, 0, 0,
+                                      1, 1, 1]),
+          dict(cols=3, rows=3, array=[0, 0, 1,
+                                      0, 0, 1,
+                                      1, 1, 1]),
+
+          dict(cols=2, rows=3, array=[1, 0,
+                                      1, 0,
+                                      1, 1]),
+          dict(cols=2, rows=3, array=[1, 1,
+                                      1, 0,
+                                      1, 0]),
+          dict(cols=2, rows=3, array=[1, 1,
+                                      0, 1,
+                                      0, 1]),
+          dict(cols=2, rows=3, array=[0, 1,
+                                      0, 1,
+                                      1, 1]),
+
+          dict(cols=3, rows=2, array=[1, 1, 1,
+                                      1, 0, 0]),
+          dict(cols=3, rows=2, array=[1, 1, 1,
+                                      0, 0, 1]),
+          dict(cols=3, rows=2, array=[1, 0, 0,
+                                      1, 1, 1]),
+          dict(cols=3, rows=2, array=[0, 0, 1,
+                                      1, 1, 1]), ]
