@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+__version__ = '1.0.0'
 
 from random import randint
 from kivy.app import App
@@ -229,7 +229,7 @@ class CustomScatter(ScatterLayout):
                 parent = self.children[0]
                 parent.clear_widgets()
                 root_class = parent.parent.parent.parent
-                Clock.schedule_once(lambda dt: self.update_score(root_class, plus_score), .05)
+                Clock.schedule_once(lambda dt: self.update_score(root_class, plus_score), .02)
                 lines = get_lines(board_labels)
                 self.clear_lines(lines)
                 if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
@@ -248,7 +248,7 @@ class CustomScatter(ScatterLayout):
     def update_score(self, scored_class, point):
         if point > 0:
             scored_class.score += 1
-            Clock.schedule_once(lambda dt: self.update_score(scored_class, point - 1), .05)
+            Clock.schedule_once(lambda dt: self.update_score(scored_class, point - 1), .02)
 
     def clear_lines(self, lines):
         board = self.parent.parent.board
@@ -274,7 +274,7 @@ class CustomScatter(ScatterLayout):
         for i in all_colored_labels:
             anim = CustomAnimation(rgba=board.parent.labels, d=.9, t='in_out_back', wait_for=len(all_colored_labels))
             anim.start(i)
-        Clock.schedule_once(lambda dt: self.update_score(board.parent, len(all_labels)), .05)
+        Clock.schedule_once(lambda dt: self.update_score(board.parent, len(all_labels)), .02)
 
     @staticmethod
     def change_movement(board):
