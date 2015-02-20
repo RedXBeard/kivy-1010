@@ -1,6 +1,7 @@
 __version__ = '1.0.0'
 
 from random import randint
+
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.utils import get_color_from_hex
@@ -15,9 +16,7 @@ from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
-
 from kivy.properties import NumericProperty
-
 from config import DB, THEME, COLOR, SHAPES
 
 
@@ -145,8 +144,8 @@ class CustomScatter(ScatterLayout):
         if self.do_translation_x and self.do_translation_y:
             shape = self.children[0].children[0]
             for label in shape.children:
-                label.size = (30, 30)
-            shape.spacing = (3, 3)
+                label.size = (28, 28)
+            shape.spacing = (5, 5)
 
     def on_bring_to_front(self, touch):
         super(CustomScatter, self).on_bring_to_front(touch)
@@ -178,8 +177,8 @@ class CustomScatter(ScatterLayout):
             for label in labels:
                 pos_x, pos_y = label.pos
                 lbl_wid, lbl_hei = label.size
-                pos_x_check = pos_x - 3 <= obj_x <= pos_x + lbl_wid + 3
-                pos_y_check = pos_y - 3 <= obj_y <= pos_y + lbl_hei + 3
+                pos_x_check = pos_x - 6 <= obj_x <= pos_x + lbl_wid + 3
+                pos_y_check = pos_y - 6 <= obj_y <= pos_y + lbl_hei + 3
                 if pos_x_check and pos_y_check:
                     # position is available or not?
                     lbl_index = board.children.index(label)
@@ -302,15 +301,15 @@ class Kivy1010(GridLayout):
         self.popup = None
         self.create_on_start_popup()
 
+    def change_just_theme(self, *args):
+        theme = filter(lambda x: x != self.theme, THEME.keys())[0]
+        self.set_theme(theme=theme)
+        self.keep_on()
+
     def change_theme(self, *args):
         theme = filter(lambda x: x != self.theme, THEME.keys())[0]
         self.set_theme(theme=theme)
         self.go()
-
-    def change_theme_noreset(self, args):
-        theme = filter(lambda x: x != self.theme, THEME.keys())[0]
-        self.set_theme(theme=theme)
-        self.keep_on()
 
     def set_theme(self, theme=None, *args):
         if not theme:
@@ -318,9 +317,15 @@ class Kivy1010(GridLayout):
         self.theme = theme
         self.background = THEME.get(theme).get('background')
         self.labels = THEME.get(theme).get('labels')
+        self.change_board_color(self.labels)
         Window.clearcolor = self.background
         DB.store_put('theme', theme)
         DB.store_sync()
+
+    def change_board_color(self, color):
+        for label in self.board.children:
+            if not label.filled:
+                set_color(label, color)
 
     def get_pause_but(self):
         try:
@@ -374,17 +379,29 @@ class Kivy1010(GridLayout):
         label = Label(text=str(self.get_record()), color=get_color_from_hex('5BBEE5'), font_size=30)
         boxlayout.add_widget(img)
         boxlayout.add_widget(label)
+        theme = Button(text_width=(self.width, None), halign='left')
+        theme.image.source = self.theme == 'dark' and 'assets/sun.png' or 'assets/moon.png'
+
         layout = GridLayout(cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
-        layout.add_widget(button)
-        layout.add_widget(boxlayout)
+
         if args:
+            restart = Button(background_color=get_color_from_hex('EC9449'))
+            restart.image.source = 'assets/refresh.png'
+            restart.bind(on_press=self.go)
             button.bind(on_press=self.keep_on)
-        else:
+            theme.bind(on_press=self.change_just_theme)
+            play_restart_box = GridLayout(cols=2, rows=1, spacing=(2, 0))
+            play_restart_box.add_widget(button)
+            play_restart_box.add_widget(restart)
+            layout.add_widget(play_restart_box)
+
+        if not args:
+            layout.add_widget(button)
             button.bind(on_press=self.go)
-            theme = Button(text_width=(self.width, None), halign='left')
-            theme.image.source = self.theme == 'dark' and 'assets/sun.png' or 'assets/moon.png'
             theme.bind(on_press=self.change_theme)
-            layout.add_widget(theme)
+
+        layout.add_widget(boxlayout)
+        layout.add_widget(theme)
 
         self.popup = Popup(content=layout, size_hint=(None, None), size=(200, 300), title='Kivy 1010',
                            title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),

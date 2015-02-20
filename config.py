@@ -1,5 +1,6 @@
 import os
 from subprocess import Popen, PIPE
+
 from kivy.storage.jsonstore import JsonStore
 from kivy.utils import get_color_from_hex
 
@@ -38,8 +39,8 @@ if not DB.store_exists('theme'):
     DB.store_put('theme', 'light')
 DB.store_sync()
 
-THEME = {'dark': {'background': get_color_from_hex('393C3E'),
-                  'labels': get_color_from_hex('D1D1D1')},
+THEME = {'dark': {'background': get_color_from_hex('303030'),
+                  'labels': get_color_from_hex('666666')},
          'light': {'background': get_color_from_hex('F0F0F0'),
                    'labels': get_color_from_hex('E2DDD5')}}
 
