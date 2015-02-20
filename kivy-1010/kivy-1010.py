@@ -331,7 +331,7 @@ class CustomScatter(ScatterLayout):
         for i in all_labels:
             i.filled = False
         for i in all_colored_labels:
-            anim = CustomAnimation(rgba=board.parent.labels, d=.5, t='in_back', wait_for=len(all_colored_labels))
+            anim = CustomAnimation(rgba=board.parent.labels, d=.9, t='in_out_back', wait_for=len(all_colored_labels))
             anim.start(i)
         Clock.schedule_once(lambda dt: self.update_score(board.parent, len(all_labels)), .05)
 
