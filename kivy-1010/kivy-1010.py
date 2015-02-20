@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from random import randint
-
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.utils import get_color_from_hex
@@ -16,7 +15,9 @@ from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
+
 from kivy.properties import NumericProperty
+
 from config import DB, THEME
 
 
@@ -97,7 +98,8 @@ def check_occupied(board, board_row, shape_objs):
     for i in board_row:
         board_label = board.children[i]
         color = get_color(board_label)
-        if color.rgba != board.parent.labels:
+        # CHECK
+        if hasattr(board_label, 'filled') and board_label.filled:  # color.rgba != board.parent.labels:
             if str(shape_objs[index]).find('Label') != -1:
                 occupied = True
         index += 1
@@ -121,7 +123,9 @@ def get_lines(indexes):
 
 
 def free_positions(board, shape):
-    pos_on_board = filter(lambda x: get_color(x).rgba == board.parent.labels, board.children)
+    # CHECK
+    pos_on_board = filter(lambda x: not x.filled,  # get_color(x).rgba == board.parent.labels,
+                          board.children)
     place = None
     for pos in pos_on_board:
         label_index = board.children.index(pos)
@@ -170,7 +174,6 @@ class CustomAnimation(Animation):
                 scatters = widget.parent
                 active_shapes = map(lambda x: x[0],
                                     filter(lambda x: x, map(lambda x: x.children[0].children, scatters.children)))
-
                 possible_places = False
                 for shape in active_shapes:
                     result = free_positions(scatters.parent.board, shape)
@@ -259,6 +262,8 @@ class CustomScatter(ScatterLayout):
                 for i in shape_objs:
                     if str(i).find('Label') != -1:
                         board_label = board.children[shape_box_on_board[index]]
+                        if str(board_label).find('Label') != -1:
+                            board_label.filled = True
                         set_color(board_label, shape_color)
                         plus_score += 1
                         board_labels.append(shape_box_on_board[index])
@@ -294,14 +299,19 @@ class CustomScatter(ScatterLayout):
         for line in lines:
             flag = True
             colored_labels = []
+            labels = []
             for index in line:
                 label = board.children[index]
-                color = filter(lambda x: str(x).find('Color') != -1, label.canvas.before.children)[0]
-                colored_labels.append(color)
-                if color.rgba == board.parent.labels:
+                labels.append(label)
+                colored_labels.append(get_color(label))
+                # CHECK
+                if not hasattr(label, 'filled') or not label.filled:  #color.rgba == board.parent.labels:
                     flag = False
                     break
             if flag:
+                # CHECK
+                for i in labels:
+                    i.filled = False
                 for i in colored_labels:
                     anim = CustomAnimation(rgba=board.parent.labels, d=.2, t='in_circ', wait_for=10)
                     anim.start(i)
