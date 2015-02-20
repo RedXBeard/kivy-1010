@@ -54,13 +54,26 @@ SHAPES = [dict(cols=5, rows=1, array=[1, 1, 1, 1, 1]),
                                       0, 0, 1,
                                       1, 1, 1])]
 
-COLOR = [get_color_from_hex('DC6554'),  # red
+COLOR = [get_color_from_hex('DC6555'),  # red
          get_color_from_hex('5BBEE5'),  # light blue
-         get_color_from_hex('EC9449'),  # orange
-         get_color_from_hex('FAC73D'),  # yellow
-         get_color_from_hex('97DB55'),  # light green
+         get_color_from_hex('448FC4'),
+         get_color_from_hex('6FE5FE'),
+         get_color_from_hex('50B5D5'),
+         get_color_from_hex('EC9449'),  # orange1
+         get_color_from_hex('ED954A'),  # orange2
+         get_color_from_hex('FFC658'),
+         get_color_from_hex('E57D4F'),
+         get_color_from_hex('C25041'),
+         get_color_from_hex('FF8271'),
+         get_color_from_hex('FAC73D'),  # yellow1
+         get_color_from_hex('FFC63E'),  # yellow2
+         get_color_from_hex('97DB55'),  # green1
+         get_color_from_hex('4DD5B0'),  # green2
+         get_color_from_hex('98DC55'),  # green3
+         get_color_from_hex('59CB86'),  # green4
          get_color_from_hex('5AC986'),  # dark green
-         get_color_from_hex('7B8ED4'),  # purple
+         get_color_from_hex('7B8ED4'),  # purple1
+         get_color_from_hex('7E8ED5'),  # purple2
          get_color_from_hex('E86981')]  # pink
 
 
@@ -273,7 +286,7 @@ class CustomScatter(ScatterLayout):
                 parent = self.children[0]
                 parent.clear_widgets()
                 root_class = parent.parent.parent.parent
-                Clock.schedule_once(lambda dt: self.update_score(root_class, plus_score), .01)
+                Clock.schedule_once(lambda dt: self.update_score(root_class, plus_score), .05)
                 lines = get_lines(board_labels)
                 self.clear_lines(lines)
                 if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
@@ -292,7 +305,7 @@ class CustomScatter(ScatterLayout):
     def update_score(self, scored_class, point):
         if point > 0:
             scored_class.score += 1
-            Clock.schedule_once(lambda dt: self.update_score(scored_class, point - 1), .01)
+            Clock.schedule_once(lambda dt: self.update_score(scored_class, point - 1), .05)
 
     def clear_lines(self, lines):
         board = self.parent.parent.board
@@ -318,9 +331,9 @@ class CustomScatter(ScatterLayout):
         for i in all_labels:
             i.filled = False
         for i in all_colored_labels:
-            anim = CustomAnimation(rgba=board.parent.labels, d=.2, t='in_circ', wait_for=len(all_colored_labels))
+            anim = CustomAnimation(rgba=board.parent.labels, d=.5, t='in_back', wait_for=len(all_colored_labels))
             anim.start(i)
-        Clock.schedule_once(lambda dt: self.update_score(board.parent, len(all_labels)), .01)
+        Clock.schedule_once(lambda dt: self.update_score(board.parent, len(all_labels)), .05)
 
     @staticmethod
     def change_movement(board):
