@@ -296,6 +296,8 @@ class CustomScatter(ScatterLayout):
 
     def clear_lines(self, lines):
         board = self.parent.parent.board
+        all_labels = []
+        all_colored_labels = []
         for line in lines:
             flag = True
             colored_labels = []
@@ -310,12 +312,15 @@ class CustomScatter(ScatterLayout):
                     break
             if flag:
                 # CHECK
-                for i in labels:
-                    i.filled = False
-                for i in colored_labels:
-                    anim = CustomAnimation(rgba=board.parent.labels, d=.2, t='in_circ', wait_for=10)
-                    anim.start(i)
-                Clock.schedule_once(lambda dt: self.update_score(board.parent, 10), .01)
+                all_labels.extend(labels)
+                all_colored_labels.extend(colored_labels)
+
+        for i in all_labels:
+            i.filled = False
+        for i in all_colored_labels:
+            anim = CustomAnimation(rgba=board.parent.labels, d=.2, t='in_circ', wait_for=len(all_colored_labels))
+            anim.start(i)
+        Clock.schedule_once(lambda dt: self.update_score(board.parent, len(all_labels)), .01)
 
     @staticmethod
     def change_movement(board):
