@@ -1,5 +1,6 @@
 # kivy-1010
 1010 game implemented on python kivy for desktops
+<a href="url"><img src="http://s23.postimg.org/4wb6ny717/2015_02_22_20_41_38_Kivy_1010.png" align="right" height="400" width="300" ></a>
 
 ## Installation
 
