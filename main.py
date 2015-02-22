@@ -19,6 +19,14 @@ from kivy.uix.button import Button
 from kivy.properties import NumericProperty
 from config import DB, THEME, COLOR, SHAPES
 
+# SCORE calculation
+"""
+1 - 0 - 0 - 0*5
+2 - 10 - 5 - 1*5
+3 - 30 - 10 - 2*5
+4 - 60 - 15 - 3*5
+5 - 100 - 20 - 4*5
+"""
 
 def get_color(obj):
     try:
@@ -228,7 +236,7 @@ class CustomScatter(ScatterLayout):
                 parent = self.children[0]
                 parent.clear_widgets()
                 root_class = parent.parent.parent.parent
-                Clock.schedule_once(lambda dt: self.update_score(root_class, plus_score), .02)
+                Clock.schedule_once(lambda dt: self.update_score(root_class, plus_score), .01)
                 lines = get_lines(board_labels)
                 self.clear_lines(lines)
                 if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
@@ -247,12 +255,13 @@ class CustomScatter(ScatterLayout):
     def update_score(self, scored_class, point):
         if point > 0:
             scored_class.score += 1
-            Clock.schedule_once(lambda dt: self.update_score(scored_class, point - 1), .02)
+            Clock.schedule_once(lambda dt: self.update_score(scored_class, point - 1), .01)
 
     def clear_lines(self, lines):
         board = self.parent.parent.board
         all_labels = []
         all_colored_labels = []
+        block_count = 0
         for line in lines:
             flag = True
             colored_labels = []
@@ -265,6 +274,7 @@ class CustomScatter(ScatterLayout):
                     flag = False
                     break
             if flag:
+                block_count += 1
                 all_labels.extend(labels)
                 all_colored_labels.extend(colored_labels)
 
@@ -273,7 +283,8 @@ class CustomScatter(ScatterLayout):
         for i in all_colored_labels:
             anim = CustomAnimation(rgba=board.parent.labels, d=.9, t='in_out_back', wait_for=len(all_colored_labels))
             anim.start(i)
-        Clock.schedule_once(lambda dt: self.update_score(board.parent, len(all_labels)), .02)
+        plus_score = len(all_labels) + ((block_count > 0 and (5 * (block_count - 1)) or 0) * block_count)
+        Clock.schedule_once(lambda dt: self.update_score(board.parent, plus_score), .01)
 
     @staticmethod
     def change_movement(board):
@@ -508,4 +519,5 @@ if __name__ == '__main__':
     Config.set('kivy', 'desktop', 1)
     Config.set('graphics', 'fullscreen', 0)
     Config.set('graphics', 'resizable', 0)
+    Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
     KivyMinesApp().run()
