@@ -87,8 +87,7 @@ def get_lines(indexes):
 
 
 def free_positions(board, shape):
-    pos_on_board = filter(lambda x: not x.filled,  # get_color(x).rgba == board.parent.labels,
-                          board.children)
+    pos_on_board = filter(lambda x: not x.filled, board.children)
     place = None
     for pos in pos_on_board:
         label_index = board.children.index(pos)
@@ -124,26 +123,18 @@ class Shape(GridLayout):
 
 
 class CustomAnimation(Animation):
-    def __init__(self, wait_for=0, *args, **kwargs):
-        super(CustomAnimation, self).__init__(*args, **kwargs)
-        self.wait_for = wait_for
-
     def on_complete(self, widget):
         super(CustomAnimation, self).stop(widget)
         if str(widget).find('Color') == -1:
-            if self.wait_for > 0:
-                self.wait_for -= 1
-            if self.wait_for == 0:
-                scatters = widget.parent
-                active_shapes = map(lambda x: x[0],
-                                    filter(lambda x: x, map(lambda x: x.children[0].children, scatters.children)))
-                possible_places = False
-                for shape in active_shapes:
-                    result = free_positions(scatters.parent.board, shape)
-                    possible_places = possible_places or result
-                if not possible_places:
-                    CustomScatter.change_movement(scatters.parent)
-                self.wait_for = -1
+            scatters = widget.parent
+            active_shapes = map(lambda x: x[0],
+                                filter(lambda x: x, map(lambda x: x.children[0].children, scatters.children)))
+            possible_places = False
+            for shape in active_shapes:
+                result = free_positions(scatters.parent.board, shape)
+                possible_places = possible_places or result
+            if not possible_places:
+                CustomScatter.change_movement(scatters.parent)
 
 
 class CustomScatter(ScatterLayout):
@@ -201,12 +192,7 @@ class CustomScatter(ScatterLayout):
         except AttributeError:
             pass
         except IndexError:
-            try:
-                shape = self.children[0].children[0]
-            except IndexError:
-                shape = None
-            anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear',
-                                   duration=.2, wait_for=shape and shape.cols * shape.rows or 0)
+            anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
 
     def get_colored_area(self, board, label, **kwargs):
@@ -244,12 +230,7 @@ class CustomScatter(ScatterLayout):
             else:
                 raise IndexError
         except IndexError:
-            try:
-                shape = self.children[0].children[0]
-            except IndexError:
-                shape = None
-            anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear',
-                                   duration=.2, wait_for=shape and shape.cols * shape.rows or 0)
+            anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
 
     def update_score(self, scored_class, point):
@@ -281,7 +262,7 @@ class CustomScatter(ScatterLayout):
         for i in all_labels:
             i.filled = False
         for i in all_colored_labels:
-            anim = CustomAnimation(rgba=board.parent.labels, d=.9, t='in_out_back', wait_for=len(all_colored_labels))
+            anim = CustomAnimation(rgba=board.parent.labels, d=.9, t='in_out_back')
             anim.start(i)
         plus_score = len(all_labels) + ((block_count > 0 and (5 * (block_count - 1)) or 0) * block_count)
         Clock.schedule_once(lambda dt: self.update_score(board.parent, plus_score), .01)
@@ -497,7 +478,7 @@ class Kivy1010(GridLayout):
             scatter.do_translation_y = True
             scatter.do_translation_x = True
             for color in label_colors:
-                anim = CustomAnimation(rgba=shape.color, d=.2, t='in_circ', wait_for=shape.cols * shape.rows)
+                anim = CustomAnimation(rgba=shape.color, d=.2, t='in_circ')
                 anim.start(color)
 
 
