@@ -1,4 +1,4 @@
-__version__ = '1.0.0'
+__version__ = '1.2.0'
 
 from random import randint
 
@@ -44,6 +44,10 @@ def set_color(obj, color):
         pass
 
 def shape_on_box(shape, label_index):
+    """
+    Find shapes probable positioned indexes on board 
+    via given specific label on board
+    """
     shape_box_on_board = []
     line_left = (label_index / 10) * 10
     if shape.cols <= (label_index - line_left + 1):
@@ -55,21 +59,29 @@ def shape_on_box(shape, label_index):
 
 
 def check_occupied(board, board_row, shape_objs):
+    """
+    Check if given possible position list which is 
+    generated/found with 'shape_on_box' method 
+    is already occupied with other shape or not
+    """
     occupied = False
     if not board_row:
         occupied = True
     index = 0
     for i in board_row:
         board_label = board.children[i]
-        color = get_color(board_label)
-        if hasattr(board_label, 'filled') and board_label.filled:
+        if board_label.filled:
             if str(shape_objs[index]).find('Label') != -1:
                 occupied = True
+                break
         index += 1
     return occupied
 
 
 def get_lines(indexes):
+    """
+    in row and in cols indexes are taken.
+    """
     lines = []
     for i in indexes:
         tmp_cols = range(i % 10, 100, 10)
@@ -86,8 +98,12 @@ def get_lines(indexes):
 
 
 def free_positions(board, shape):
+    """
+    check for the given shape is there any 
+    suitable position is available or not on board
+    """
     pos_on_board = filter(lambda x: not x.filled, board.children)
-    place = None
+    place = False
     for pos in pos_on_board:
         label_index = board.children.index(pos)
         shape_objs = shape.children
@@ -100,10 +116,13 @@ def free_positions(board, shape):
             break
         except:
             pass
-    return bool(place)
+    return place
 
 
 class Shape(GridLayout):
+    """
+    Generate shapes from given already set list with random color.
+    """
     def __init__(self):
         super(Shape, self).__init__()
         shape = SHAPES[randint(0, len(SHAPES) - 1)]
@@ -152,6 +171,9 @@ class CustomScatter(ScatterLayout):
             pass
 
     def position_calculation(self):
+        """
+        On board, taken scatter position is on a label or not check is handled
+        """
         try:
             board = self.parent.parent.board
             labels = board.children
@@ -180,6 +202,10 @@ class CustomScatter(ScatterLayout):
             anim.start(self)
 
     def get_colored_area(self, board, label, **kwargs):
+        """
+        To set found or untouched shape last position is available or 
+        not checked and placed shape is disappeared if all gone new set is called
+        """
         plus_score = 0
         try:
             shape = kwargs.get('shape', self.children[0].children[0])
@@ -231,6 +257,9 @@ class CustomScatter(ScatterLayout):
             CustomScatter.change_movement(board.parent)
 
     def clear_lines(self, lines):
+        """
+        clear lines on rows and cols, first collect indexes then get points
+        """
         board = self.parent.parent.board
         all_labels = []
         all_colored_labels = []
@@ -261,6 +290,9 @@ class CustomScatter(ScatterLayout):
 
     @staticmethod
     def change_movement(board):
+        """
+        disables the movements of shapes.
+        """
         scatters = [board.comingLeft, board.comingMid, board.comingRight]
         for scatter in scatters:
             scatter.do_translation_x = not scatter.do_translation_x
@@ -350,6 +382,7 @@ class Kivy1010(GridLayout):
         self.create_pause_but()
         self.high_score = self.get_record()
         self.score = 0
+        self.visual_score = 0
         self.popup.dismiss()
         self.popup = None
         self.refresh_board()
