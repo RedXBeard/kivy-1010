@@ -233,26 +233,21 @@ class CustomScatter(ScatterLayout):
             anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
         
-        active_shapes = map(lambda x: x[0], filter(lambda x: x, map(lambda x: x.children[0].children, board.parent.coming.children)))
+        active_shapes = map(lambda x: x[0], filter(lambda x: x, 
+                            map(lambda x: x.children[0].children, 
+                                    board.parent.coming.children)))
+
         possible_places = False
         for shape in active_shapes:
             result = free_positions(board, shape)
             possible_places = possible_places or result
 
+        board.parent.score += plus_score
         if not possible_places:
-            root_class.score += plus_score
             CustomScatter.change_movement(board.parent)
-        else:
-            Clock.schedule_once(lambda dt: self.update_score(board.parent, plus_score), .01)
-            
-
-    def update_score(self, scored_class, point):
-        if point > 0:
-            scored_class.score_onupdate = True
-            scored_class.score += 1
-            Clock.schedule_once(lambda dt: self.update_score(scored_class, point - 1), .01)
-        else:
-            scored_class.score_onupdate = False
+        #else:
+        #    Clock.schedule_once(lambda dt: self.update_score(board.parent, 
+        #                                                     plus_score), .01)
 
     def clear_lines(self, lines):
         board = self.parent.parent.board
@@ -281,7 +276,8 @@ class CustomScatter(ScatterLayout):
             anim = CustomAnimation(rgba=board.parent.labels, d=.9, t='in_out_back')
             anim.start(i)
         plus_score = len(all_labels) + ((block_count > 0 and (5 * (block_count - 1)) or 0) * block_count)
-        Clock.schedule_once(lambda dt: self.update_score(board.parent, plus_score), .01)
+        board.parent.score += plus_score
+        #Clock.schedule_once(lambda dt: self.update_score(board.parent, plus_score), .01)
 
     @staticmethod
     def change_movement(board):
@@ -296,8 +292,8 @@ class CustomScatter(ScatterLayout):
 
 class Kivy1010(GridLayout):
     score = NumericProperty(0)
+    visual_score = NumericProperty(0)
     high_score = NumericProperty(0)
-    score_onupdate = False
     theme = 'light'
     background = ''
     labels = ''
@@ -309,7 +305,13 @@ class Kivy1010(GridLayout):
         self.high_score = self.get_record()
         self.popup = None
         self.create_on_start_popup()
+        Clock.schedule_once(lambda dt: self.update_score(), .03)
 
+    def update_score(self):
+        if self.score > self.visual_score:
+            self.visual_score += 1
+        Clock.schedule_once(lambda dt: self.update_score(), .03)
+                                                             
     def change_just_theme(self, *args):
         theme = filter(lambda x: x != self.theme, THEME.keys())[0]
         self.set_theme(theme=theme)
