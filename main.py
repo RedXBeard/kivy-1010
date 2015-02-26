@@ -125,16 +125,16 @@ class Shape(GridLayout):
 class CustomAnimation(Animation):
     def on_complete(self, widget):
         super(CustomAnimation, self).stop(widget)
-        if str(widget).find('Color') == -1:
-            scatters = widget.parent
-            active_shapes = map(lambda x: x[0],
-                                filter(lambda x: x, map(lambda x: x.children[0].children, scatters.children)))
-            possible_places = False
-            for shape in active_shapes:
-                result = free_positions(scatters.parent.board, shape)
-                possible_places = possible_places or result
-            if not possible_places:
-                CustomScatter.change_movement(scatters.parent)
+#         if str(widget).find('Color') == -1:
+#             scatters = widget.parent
+#             active_shapes = map(lambda x: x[0],
+#                                 filter(lambda x: x, map(lambda x: x.children[0].children, scatters.children)))
+#             possible_places = False
+#             for shape in active_shapes:
+#                 result = free_positions(scatters.parent.board, shape)
+#                 possible_places = possible_places or result
+#             if not possible_places:
+#                 CustomScatter.change_movement(scatters.parent)
 
 
 class CustomScatter(ScatterLayout):
@@ -196,6 +196,7 @@ class CustomScatter(ScatterLayout):
             anim.start(self)
 
     def get_colored_area(self, board, label, **kwargs):
+        plus_score = 0
         try:
             shape = kwargs.get('shape', self.children[0].children[0])
             shape_objs = shape.children
@@ -222,21 +223,36 @@ class CustomScatter(ScatterLayout):
                 parent = self.children[0]
                 parent.clear_widgets()
                 root_class = parent.parent.parent.parent
-                Clock.schedule_once(lambda dt: self.update_score(root_class, plus_score), .01)
-                lines = get_lines(board_labels)
-                self.clear_lines(lines)
+                self.clear_lines(get_lines(board_labels))
                 if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
                     root_class.coming_shapes()
+                
             else:
                 raise IndexError
         except IndexError:
             anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
+        
+        active_shapes = map(lambda x: x[0], filter(lambda x: x, map(lambda x: x.children[0].children, board.parent.coming.children)))
+        possible_places = False
+        for shape in active_shapes:
+            result = free_positions(board, shape)
+            possible_places = possible_places or result
+
+        if not possible_places:
+            root_class.score += plus_score
+            CustomScatter.change_movement(board.parent)
+        else:
+            Clock.schedule_once(lambda dt: self.update_score(board.parent, plus_score), .01)
+            
 
     def update_score(self, scored_class, point):
         if point > 0:
+            scored_class.score_onupdate = True
             scored_class.score += 1
             Clock.schedule_once(lambda dt: self.update_score(scored_class, point - 1), .01)
+        else:
+            scored_class.score_onupdate = False
 
     def clear_lines(self, lines):
         board = self.parent.parent.board
@@ -281,6 +297,7 @@ class CustomScatter(ScatterLayout):
 class Kivy1010(GridLayout):
     score = NumericProperty(0)
     high_score = NumericProperty(0)
+    score_onupdate = False
     theme = 'light'
     background = ''
     labels = ''
@@ -449,9 +466,12 @@ class Kivy1010(GridLayout):
 
     def coming_shapes(self):
         scatters = [self.comingLeft, self.comingMid, self.comingRight]
+        scatters_pos = [(0, 70), (0, 70), (0, 70)]
         for scatter in scatters:
             scatter.clear_widgets()
-            scatter.pos = scatter.pre_pos
+            scatter.pos = scatters_pos[scatters.index(scatter)]
+            scatter.pre_pos = scatter.pos
+            
         for scatter in scatters:
             shape = Shape()
             width = 0
@@ -473,6 +493,12 @@ class Kivy1010(GridLayout):
             shape.spacing = (1, 1)
             scatter.size_hint = (None, None)
             scatter.size = (width, height)
+            
+            index = scatters.index(scatter)
+            scatter_pos_x = (160 * index) + 20 + ((160 - scatter.size[0])/2)
+            scatter.pos = (scatter_pos_x, scatter.pos[1])
+            
+            scatter.pre_pos = scatter.pos
             scatter.add_widget(shape)
             label_colors = shape.get_colors()
             scatter.do_translation_y = True
