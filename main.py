@@ -102,7 +102,7 @@ def free_positions(board, shape):
     check for the given shape is there any 
     suitable position is available or not on board
     """
-    pos_on_board = filter(lambda x: not x.filled, board.children)
+    pos_on_board = board.children#filter(lambda x: not x.filled, board.children)
     place = False
     for pos in pos_on_board:
         label_index = board.children.index(pos)
