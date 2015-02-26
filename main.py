@@ -62,8 +62,7 @@ def check_occupied(board, board_row, shape_objs):
     for i in board_row:
         board_label = board.children[i]
         color = get_color(board_label)
-        # CHECK
-        if hasattr(board_label, 'filled') and board_label.filled:  # color.rgba != board.parent.labels:
+        if hasattr(board_label, 'filled') and board_label.filled:
             if str(shape_objs[index]).find('Label') != -1:
                 occupied = True
         index += 1
@@ -122,21 +121,6 @@ class Shape(GridLayout):
         return result
 
 
-class CustomAnimation(Animation):
-    def on_complete(self, widget):
-        super(CustomAnimation, self).stop(widget)
-#         if str(widget).find('Color') == -1:
-#             scatters = widget.parent
-#             active_shapes = map(lambda x: x[0],
-#                                 filter(lambda x: x, map(lambda x: x.children[0].children, scatters.children)))
-#             possible_places = False
-#             for shape in active_shapes:
-#                 result = free_positions(scatters.parent.board, shape)
-#                 possible_places = possible_places or result
-#             if not possible_places:
-#                 CustomScatter.change_movement(scatters.parent)
-
-
 class CustomScatter(ScatterLayout):
     def on_transform_with_touch(self, touch):
         super(CustomScatter, self).on_transform_with_touch(touch)
@@ -192,7 +176,7 @@ class CustomScatter(ScatterLayout):
         except AttributeError:
             pass
         except IndexError:
-            anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
+            anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
 
     def get_colored_area(self, board, label, **kwargs):
@@ -230,7 +214,7 @@ class CustomScatter(ScatterLayout):
             else:
                 raise IndexError
         except IndexError:
-            anim = CustomAnimation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
+            anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
         
         active_shapes = map(lambda x: x[0], filter(lambda x: x, 
@@ -245,9 +229,6 @@ class CustomScatter(ScatterLayout):
         board.parent.score += plus_score
         if not possible_places:
             CustomScatter.change_movement(board.parent)
-        #else:
-        #    Clock.schedule_once(lambda dt: self.update_score(board.parent, 
-        #                                                     plus_score), .01)
 
     def clear_lines(self, lines):
         board = self.parent.parent.board
@@ -273,11 +254,10 @@ class CustomScatter(ScatterLayout):
         for i in all_labels:
             i.filled = False
         for i in all_colored_labels:
-            anim = CustomAnimation(rgba=board.parent.labels, d=.9, t='in_out_back')
+            anim = Animation(rgba=board.parent.labels, d=.9, t='in_out_back')
             anim.start(i)
         plus_score = len(all_labels) + ((block_count > 0 and (5 * (block_count - 1)) or 0) * block_count)
         board.parent.score += plus_score
-        #Clock.schedule_once(lambda dt: self.update_score(board.parent, plus_score), .01)
 
     @staticmethod
     def change_movement(board):
@@ -506,7 +486,7 @@ class Kivy1010(GridLayout):
             scatter.do_translation_y = True
             scatter.do_translation_x = True
             for color in label_colors:
-                anim = CustomAnimation(rgba=shape.color, d=.2, t='in_circ')
+                anim = Animation(rgba=shape.color, d=.2, t='in_circ')
                 anim.start(color)
 
 
