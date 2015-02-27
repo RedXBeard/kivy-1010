@@ -18,7 +18,7 @@
 ## Installation
 
 #### For MacOS
-Download and install <code>.dmg</code> file from [MacOSX file](https://app.box.com/s/4j2wvv71p2zn5x38duaateup2189d5iw)
+Download and install <code>.dmg</code> file from [MacOSX file](https://app.box.com/s/k62rafyc2a0e80h88crn9km274123eqi)
 
 #### For Linux
 Run the following commands;
@@ -46,4 +46,4 @@ Application is now reachable from the menu.
 
 
 #### For Windows
-Download and <code>.zip</code> file from [windows file](https://app.box.com/s/2olappzxbgdhut2azyor4xbmcs97ak6i) then unzip file to program files folder create shortcut of <code>.exe</code> in unzipped folder to the desktop then it is ready to run
+Download and <code>.zip</code> file from [windows file](https://app.box.com/s/2zf82w8gxv1w31m4vsi6xkz4eceaqdae) then unzip file to program files folder create shortcut of <code>.exe</code> in unzipped folder to the desktop then it is ready to run
