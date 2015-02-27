@@ -2,6 +2,19 @@
 1010 game implemented on python kivy for desktops
 <a href="url"><img src="http://s23.postimg.org/4wb6ny717/2015_02_22_20_41_38_Kivy_1010.png" align="right" height="400" width="300" ></a>
 
+## Releases
+
+##### 1.0.0
+- First release.
+
+##### 1.1.0
+- Rotation, scaling actions of shapes bug fixed.
+
+##### 1.2.0
+- Free position calculation bug fixed.
+- Code cleaned.
+- Performance fixes.
+
 ## Installation
 
 #### For MacOS
