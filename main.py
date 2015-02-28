@@ -45,7 +45,7 @@ def set_color(obj, color):
 
 def shape_on_box(shape, label_index):
     """
-    Find shapes probable positioned indexes on board 
+    Find shapes probable positioned indexes on board
     via given specific label on board
     """
     shape_box_on_board = []
@@ -60,8 +60,8 @@ def shape_on_box(shape, label_index):
 
 def check_occupied(board, board_row, shape_objs):
     """
-    Check if given possible position list which is 
-    generated/found with 'shape_on_box' method 
+    Check if given possible position list which is
+    generated/found with 'shape_on_box' method
     is already occupied with other shape or not
     """
     occupied = False
@@ -99,7 +99,7 @@ def get_lines(indexes):
 
 def free_positions(board, shape):
     """
-    check for the given shape is there any 
+    check for the given shape is there any
     suitable position is available or not on board
     """
     pos_on_board = board.children#filter(lambda x: not x.filled, board.children)
@@ -203,7 +203,7 @@ class CustomScatter(ScatterLayout):
 
     def get_colored_area(self, board, label, **kwargs):
         """
-        To set found or untouched shape last position is available or 
+        To set found or untouched shape last position is available or
         not checked and placed shape is disappeared if all gone new set is called
         """
         plus_score = 0
@@ -236,15 +236,15 @@ class CustomScatter(ScatterLayout):
                 self.clear_lines(get_lines(board_labels))
                 if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
                     root_class.coming_shapes()
-                
+
             else:
                 raise IndexError
         except IndexError:
             anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
-        
-        active_shapes = map(lambda x: x[0], filter(lambda x: x, 
-                            map(lambda x: x.children[0].children, 
+
+        active_shapes = map(lambda x: x[0], filter(lambda x: x,
+                            map(lambda x: x.children[0].children,
                                     board.parent.coming.children)))
 
         possible_places = False
@@ -322,8 +322,8 @@ class Kivy1010(GridLayout):
     def update_score(self):
         if self.score > self.visual_score:
             self.visual_score += 1
-        Clock.schedule_once(lambda dt: self.update_score(), .03)
-                                                             
+        Clock.schedule_once(lambda dt: self.update_score(), .05)
+
     def change_just_theme(self, *args):
         theme = filter(lambda x: x != self.theme, THEME.keys())[0]
         self.set_theme(theme=theme)
@@ -379,20 +379,26 @@ class Kivy1010(GridLayout):
             self.score_board.remove_widget(button)
 
     def go(self, *args):
-        self.create_pause_but()
-        self.high_score = self.get_record()
-        self.score = 0
-        self.visual_score = 0
-        self.popup.dismiss()
-        self.popup = None
-        self.refresh_board()
-        self.coming_shapes()
+        try:
+            self.create_pause_but()
+            self.high_score = self.get_record()
+            self.score = 0
+            self.visual_score = 0
+            self.popup.dismiss()
+            self.popup = None
+            self.refresh_board()
+            self.coming_shapes()
+        except AttributeError:
+            pass
 
     def keep_on(self, *args):
-        self.create_pause_but()
-        self.high_score = self.get_record()
-        self.popup.dismiss()
-        self.popup = None
+        try:
+            self.create_pause_but()
+            self.high_score = self.get_record()
+            self.popup.dismiss()
+            self.popup = None
+        except AttributeError:
+            pass
 
     def create_on_start_popup(self, *args):
         self.remove_pause_but()
@@ -481,12 +487,14 @@ class Kivy1010(GridLayout):
 
     def coming_shapes(self):
         scatters = [self.comingLeft, self.comingMid, self.comingRight]
-        scatters_pos = [(0, 70), (0, 70), (0, 70)]
         for scatter in scatters:
             scatter.clear_widgets()
-            scatter.pos = scatters_pos[scatters.index(scatter)]
+            scatter.pos = (0, 0)
             scatter.pre_pos = scatter.pos
-            
+
+        per_shape_width = float(Window.width) / 3
+        per_shape_height = float(self.coming.height)
+
         for scatter in scatters:
             shape = Shape()
             width = 0
@@ -508,12 +516,13 @@ class Kivy1010(GridLayout):
             shape.spacing = (1, 1)
             scatter.size_hint = (None, None)
             scatter.size = (width, height)
-            
+
             index = scatters.index(scatter)
-            scatter_pos_x = (160 * index) + 20 + ((160 - scatter.size[0])/2)
-            scatter.pos = (scatter_pos_x, scatter.pos[1])
-            
+            scatter_pos_x = (per_shape_width * index) + ((per_shape_width - scatter.size[0])/2)
+            scatter_pos_y = (per_shape_height - scatter.size[1]) / 2
+            scatter.pos = (scatter_pos_x, scatter_pos_y)
             scatter.pre_pos = scatter.pos
+
             scatter.add_widget(shape)
             label_colors = shape.get_colors()
             scatter.do_translation_y = True
@@ -521,6 +530,33 @@ class Kivy1010(GridLayout):
             for color in label_colors:
                 anim = Animation(rgba=shape.color, d=.2, t='in_circ')
                 anim.start(color)
+
+    def resize_all(self, width):
+        try:
+            self.score_board.visual_score_label.size = (width / 2 - 40,
+                                                                                      self.score_board.visual_score_label.size[1])
+        except:
+            pass
+
+        try:
+            padding = (width > 330) / 2 - 20 and (width - 330) / 2 - 20 or 0
+            self.board.width = self.board.height = 330
+            self.board.padding = (padding, 10, padding, 10)
+        except:
+            pass
+
+        try:
+            scatters = [self.comingLeft, self.comingMid, self.comingRight]
+            per_shape_width = float(width) / 3
+            per_shape_height = self.coming.height
+            for scatter in scatters:
+                index = scatters.index(scatter)
+                scatter_pos_x = (per_shape_width * index) + ((per_shape_width - scatter.size[0])/2)
+                scatter_pos_y = (per_shape_height - scatter.size[1]) / 2
+                scatter.pos = (scatter_pos_x, scatter_pos_y)
+                scatter.pre_pos = scatter.pos
+        except:
+            pass
 
 
 class KivyMinesApp(App):
@@ -531,15 +567,25 @@ class KivyMinesApp(App):
         self.icon = 'assets/cube.png'
 
     def build(self):
+        def resize(*args, **kwargs):
+            window, width, height = args
+            try:
+                root = filter(lambda x: str(x).find('Kivy1010') != -1, window.children)[0]
+                root.resize_all(root.width)
+            except IndexError:
+                pass
         mines = Kivy1010()
+        Window.bind(on_resize=resize)
+
         return mines
+
 
 
 if __name__ == '__main__':
     Window.size = (520, 600)
     Window.borderless = False
     Config.set('kivy', 'desktop', 1)
-    Config.set('graphics', 'fullscreen', 0)
-    Config.set('graphics', 'resizable', 0)
+    #Config.set('graphics', 'fullscreen', 0)
+    #Config.set('graphics', 'resizable', 0)
     Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
     KivyMinesApp().run()

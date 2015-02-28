@@ -3,7 +3,7 @@
 <CustomScatter>
     do_scale: False
     do_rotation: False
-    
+
 <BoxLayout>:
     canvas.before:
         Color:
@@ -24,7 +24,8 @@
 	    id: image
 	    source: 'assets/play.png'
 	    pos: self.parent.pos[0]+self.parent.width/2-self.width/2, self.parent.pos[1]+self.parent.height/2-self.height/2
-	    size: map(lambda x: x/2, self.parent.size)
+        size: map(lambda x: x/2, self.parent.size)
+	    on_size: self.size=map(lambda x: x/2, self.parent.size)
 
 <Label>
     canvas.before:
@@ -89,16 +90,18 @@ Image:
                 size: 6, 6
                 pos: self.pos[0]+self.width-6, self.pos[1]+self.height-6
         id: score_board
+        visual_score_label: visual_score_label
         cols: 4
         rows: 1
         size_hint: 1, None
         spacing: 4, 4
         height: 50
         Label:
+            id: visual_score_label
             text: '%s'%str(root.visual_score)
             color: get_color_from_hex('58CB85')
             size_hint: None, None
-            size: 225, 50
+            size: 185, 50
             font_size: 30
             text_size: self.width, None
             halign: 'right'
@@ -121,27 +124,18 @@ Image:
         cols: 10
         rows: 10
         spacing: 3, 3
-        padding: 80, 10, 0, 0
-        do_translation_x: False
-        do_translation_y: False
+        size_hint_y: None
 
     FloatLayout:
-        size_hint: 1, 0.5
         id: coming
+        rows: 3
+        cols: 1
+
         CustomScatter:
             id: comingLeft
-            size_hint: None, None
-            pos: 30, 70
-            pre_pos: 30, 70
 
         CustomScatter:
             id: comingMid
-            size_hint: None, None
-            pos: 197, 70
-            pre_pos: 197, 70
 
         CustomScatter:
             id: comingRight
-            size_hint: None, None
-            pos: 364, 70
-            pre_pos: 364, 70
