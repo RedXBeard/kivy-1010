@@ -1,4 +1,4 @@
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
 from random import randint
 
@@ -28,6 +28,11 @@ from config import DB, THEME, COLOR, SHAPES, SOUNDS
 4 - 60 - 15 - 3*5
 5 - 100 - 20 - 4*5
 """
+
+SOUND = True
+
+def set_sound():
+    SOUND = False
 
 def get_color(obj):
     try:
@@ -119,18 +124,22 @@ def free_positions(board, shape):
             pass
     return place
 
-def play_sound(sound):
-    sound = SoundLoader.load(SOUNDS[sound])
-    sound.play()
-    
+def play_sound(sound_key):
+    global SOUND
+    if SOUND:
+        sound = SoundLoader.load(SOUNDS[sound_key]['path'])
+        sound.volume = SOUNDS[sound_key]['volume']
+        sound.play()
+
 
 class Shape(GridLayout):
     """
-    Generate shapes from given already set list with random color.
+    Generate shapes from given already set list with random colour.
     """
     def __init__(self):
         super(Shape, self).__init__()
-        shape = SHAPES[randint(0, len(SHAPES) - 1)]
+        shape_key = SHAPES.keys()[randint(0, len(SHAPES.keys()) - 1)]
+        shape = SHAPES[shape_key][randint(0, len(SHAPES[shape_key]) - 1)]
         color = COLOR[randint(0, len(COLOR) - 1)]
         self.rows = shape['rows']
         self.cols = shape['cols']
@@ -319,6 +328,7 @@ class Kivy1010(GridLayout):
     visual_score = NumericProperty(0)
     high_score = NumericProperty(0)
     theme = 'light'
+    sound = None
     background = ''
     labels = ''
     popup = None
@@ -330,7 +340,7 @@ class Kivy1010(GridLayout):
         self.popup = None
         self.create_on_start_popup()
         Clock.schedule_once(lambda dt: self.update_score(), .03)
-        
+
     def update_score(self):
         if self.score > self.visual_score:
             self.visual_score += 1
@@ -412,7 +422,14 @@ class Kivy1010(GridLayout):
         except AttributeError:
             pass
 
+    def change_sound(self, *args):
+        global SOUND
+        button = args[0]
+        SOUND = not SOUND
+        button.image.source = 'assets/sound_%s.png' % (SOUND and 'on' or 'off')
+
     def create_on_start_popup(self, *args):
+        global SOUND
         self.remove_pause_but()
         button = Button(background_color=get_color_from_hex('58CB85'))
         boxlayout = BoxLayout(orientation='vertical')
@@ -443,7 +460,13 @@ class Kivy1010(GridLayout):
             theme.bind(on_press=self.change_theme)
 
         layout.add_widget(boxlayout)
-        layout.add_widget(theme)
+        sound_theme_box = GridLayout(cols=2, rows=1, spacing=(2, 0))
+        sound = Button(background_color=get_color_from_hex('EC9449'))
+        sound.image.source = 'assets/sound_%s.png' % (SOUND and 'on' or 'off')
+        sound.bind(on_press=self.change_sound)
+        sound_theme_box.add_widget(theme)
+        sound_theme_box.add_widget(sound)
+        layout.add_widget(sound_theme_box)
 
         self.popup = Popup(content=layout, size_hint=(None, None), size=(200, 300), title='Kivy 1010',
                            title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
@@ -451,23 +474,34 @@ class Kivy1010(GridLayout):
         self.popup.open()
 
     def create_on_end_popup(self):
+        global SOUND
         self.remove_pause_but()
         label1 = Label(text='No Moves Left', color=get_color_from_hex('5BBEE5'))
         img = Image(source='assets/medal.png')
         label2 = Label(text=str(self.score), font_size=30, color=get_color_from_hex('5BBEE5'))
         button = Button(background_color=get_color_from_hex('58CB85'))
         button.bind(on_press=self.go)
+
         boxlayout = BoxLayout(orientation='vertical')
         boxlayout.add_widget(label1)
         boxlayout.add_widget(img)
         boxlayout.add_widget(label2)
+
         theme = Button(text_width=(self.width, None), halign='left')
         theme.bind(on_press=self.change_theme)
         theme.image.source = self.theme == 'dark' and 'assets/sun.png' or 'assets/moon.png'
+
+        sound_theme_box = GridLayout(cols=2, rows=1, spacing=(2, 0))
+        sound = Button(background_color=get_color_from_hex('EC9449'))
+        sound.image.source = 'assets/sound_%s.png' % (SOUND and 'on' or 'off')
+        sound.bind(on_press=self.change_sound)
+        sound_theme_box.add_widget(theme)
+        sound_theme_box.add_widget(sound)
+
         layout = GridLayout(cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
         layout.add_widget(boxlayout)
         layout.add_widget(button)
-        layout.add_widget(theme)
+        layout.add_widget(sound_theme_box)
         self.popup = Popup(content=layout, size_hint=(None, None), size=(200, 300), title='Kivy 1010',
                            title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
                            separator_color=get_color_from_hex('7B8ED4'))
