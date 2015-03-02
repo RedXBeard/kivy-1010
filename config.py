@@ -44,6 +44,11 @@ THEME = {'dark': {'background': get_color_from_hex('303030'),
          'light': {'background': get_color_from_hex('F0F0F0'),
                    'labels': get_color_from_hex('E2DDD5')}}
 
+SOUNDS = {'placed': 'assets/sounds/placed.wav',
+          'missed_placed': 'assets/sounds/missed_placed.wav',
+          'line_clear': 'assets/sounds/line_clear.wav',
+          'new_shapes': 'assets/sounds/new_shapes.wav',}
+          
 COLOR = [get_color_from_hex('DC6555'),  # red
          get_color_from_hex('5BBEE5'),  # light blue
          get_color_from_hex('448FC4'),

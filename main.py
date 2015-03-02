@@ -17,7 +17,8 @@ from kivy.animation import Animation
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.properties import NumericProperty
-from config import DB, THEME, COLOR, SHAPES
+from kivy.core.audio import SoundLoader
+from config import DB, THEME, COLOR, SHAPES, SOUNDS
 
 # SCORE calculation
 """
@@ -118,6 +119,10 @@ def free_positions(board, shape):
             pass
     return place
 
+def play_sound(sound):
+    sound = SoundLoader.load(SOUNDS[sound])
+    sound.play()
+    
 
 class Shape(GridLayout):
     """
@@ -198,6 +203,8 @@ class CustomScatter(ScatterLayout):
         except AttributeError:
             pass
         except IndexError:
+            if (self.pre_pos != self.pos) and self.children[0].children:
+                play_sound('missed_placed')
             anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
 
@@ -231,15 +238,19 @@ class CustomScatter(ScatterLayout):
                     index += 1
 
                 parent = self.children[0]
+                play_sound('placed')
                 parent.clear_widgets()
                 root_class = parent.parent.parent.parent
                 self.clear_lines(get_lines(board_labels))
                 if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
+                    play_sound('new_shapes')
                     root_class.coming_shapes()
 
             else:
                 raise IndexError
         except IndexError:
+            if self.pre_pos != self.pos:
+                play_sound('missed_placed')
             anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
 
@@ -279,7 +290,8 @@ class CustomScatter(ScatterLayout):
                 block_count += 1
                 all_labels.extend(labels)
                 all_colored_labels.extend(colored_labels)
-
+        if all_labels:
+            play_sound('line_clear')
         for i in all_labels:
             i.filled = False
         for i in all_colored_labels:
@@ -318,7 +330,7 @@ class Kivy1010(GridLayout):
         self.popup = None
         self.create_on_start_popup()
         Clock.schedule_once(lambda dt: self.update_score(), .03)
-
+        
     def update_score(self):
         if self.score > self.visual_score:
             self.visual_score += 1
