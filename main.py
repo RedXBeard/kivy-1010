@@ -29,10 +29,7 @@ from config import DB, THEME, COLOR, SHAPES, SOUNDS
 5 - 100 - 20 - 4*5
 """
 
-SOUND = True
-
-def set_sound():
-    SOUND = False
+SOUND = False
 
 def get_color(obj):
     try:
@@ -363,7 +360,9 @@ class Kivy1010(GridLayout):
     popup = None
 
     def __init__(self):
+        global SOUND
         super(Kivy1010, self).__init__()
+        SOUND = DB.store_get('sound')
         self.set_theme()
         self.sound = Sound()
         self.high_score = self.get_record()
@@ -458,6 +457,8 @@ class Kivy1010(GridLayout):
         button = args[0]
         SOUND = not SOUND
         button.image.source = 'assets/sound_%s.png' % (SOUND and 'on' or 'off')
+        DB.store_put('sound', SOUND)
+        DB.store_sync()
         if not SOUND:
             self.sound.stop()
 
