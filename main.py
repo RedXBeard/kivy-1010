@@ -266,7 +266,7 @@ class CustomScatter(ScatterLayout):
         if not possible_places:
             CustomScatter.change_movement(board.parent)
 
-    def clear_lines(self, lines):
+    def clear_lines(self, lines, score_update=True):
         """
         clear lines on rows and cols, first collect indexes then get points
         """
@@ -296,8 +296,9 @@ class CustomScatter(ScatterLayout):
         for i in all_colored_labels:
             anim = Animation(rgba=board.parent.labels, d=.9, t='in_out_back')
             anim.start(i)
-        plus_score = len(all_labels) + ((block_count > 0 and (5 * (block_count - 1)) or 0) * block_count)
-        board.parent.score += plus_score
+        if score_update:
+            plus_score = len(all_labels) + ((block_count > 0 and (5 * (block_count - 1)) or 0) * block_count)
+            board.parent.score += plus_score
 
     @staticmethod
     def change_movement(board):
@@ -370,10 +371,25 @@ class Kivy1010(GridLayout):
         self.create_on_start_popup()
         Clock.schedule_once(lambda dt: self.update_score(), .03)
 
+    def set_score(self):
+        self.score = DB.store_get('score')
+    
+    def sync_score(self, score):
+        DB.store_put('score', score)
+        DB.store_sync()
+    
+    def sync_board(self, board):
+        DB.store_put('board', board)
+        DB.store_sync()
+    
+    def get_synced_board(self):
+        board = DB.store_get('board')
+        return board
+    
     def update_score(self):
         if self.score > self.visual_score:
             self.visual_score += 1
-        Clock.schedule_once(lambda dt: self.update_score(), .05)
+        Clock.schedule_once(lambda dt: self.update_score(), .03)
 
     def change_just_theme(self, *args):
         theme = filter(lambda x: x != self.theme, THEME.keys())[0]
@@ -429,17 +445,29 @@ class Kivy1010(GridLayout):
         if button:
             self.score_board.remove_widget(button)
         
+    def clear_lines(self, indexes):
+        self.coming.children[0].clear_lines(indexes, score_update=False)
+    
     def go(self, *args):
         try:
+            try:
+                button = args[0]
+                if button.image.source == 'assets/refresh.png':
+                    self.sync_score(0)                    
+                    self.sync_board({})
+            except IndexError:
+                pass
             self.sound.play('game_on')
             self.create_pause_but()
             self.high_score = self.get_record()
-            self.score = 0
+            #self.score = 0
+            self.set_score()
             self.visual_score = 0
             self.popup.dismiss()
             self.popup = None
             self.refresh_board()
             self.coming_shapes()
+            self.clear_lines(get_lines(range(0, 100)))
         except AttributeError:
             pass
 
@@ -463,7 +491,6 @@ class Kivy1010(GridLayout):
             self.sound.stop()
 
     def create_on_start_popup(self, *args):
-        global SOUND
         self.remove_pause_but()
         button = Button(background_color=get_color_from_hex('58CB85'))
         boxlayout = BoxLayout(orientation='vertical')
@@ -540,6 +567,8 @@ class Kivy1010(GridLayout):
                            title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
                            separator_color=get_color_from_hex('7B8ED4'))
         self.popup.open()
+        self.sync_score(0)
+        self.sync_board({})
 
     def set_record(self):
         try:
@@ -560,9 +589,13 @@ class Kivy1010(GridLayout):
 
     def refresh_board(self):
         self.board.clear_widgets()
+        pre_board = self.get_synced_board()
         for i in range(0, 100):
             label = Label(color=(0, 0, 0, 1), size_hint=(None, None), size=(30, 30))
-            set_color(label, self.labels)
+            color = pre_board.get(str(99-i), self.labels)
+            set_color(label, color)
+            if color != self.labels:
+                label.filled = True
             self.board.add_widget(label)
 
     def coming_shapes(self):
@@ -654,8 +687,30 @@ class KivyMinesApp(App):
                 root.resize_all(root.width)
             except IndexError:
                 pass
+        
+        def save_board(*args, **kwargs):
+            window, = args
+            root = window.children[0]
+            try:
+                board = root.board.children
+                board_default_color = root.labels
+                board_visual = {}
+                if board:
+                    index = 0
+                    for label in board:
+                        color = get_color(label)
+                        if board_default_color != color.rgba:
+                            board_visual.update({index: color.rgba})
+                        index += 1
+                DB.store_put('board', board_visual)
+                DB.store_put('score', root.score)
+                DB.store_sync()
+            except AttributeError:
+                pass
+                
         mines = Kivy1010()
         Window.bind(on_resize=resize)
+        Window.bind(on_close=save_board)
 
         return mines
 
@@ -665,7 +720,5 @@ if __name__ == '__main__':
     Window.size = (520, 600)
     Window.borderless = False
     Config.set('kivy', 'desktop', 1)
-    #Config.set('graphics', 'fullscreen', 0)
-    #Config.set('graphics', 'resizable', 0)
     Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
     KivyMinesApp().run()

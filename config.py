@@ -39,6 +39,10 @@ if not DB.store_exists('theme'):
     DB.store_put('theme', 'light')
 if not DB.store_exists('sound'):
     DB.store_put('sound', True)
+if not DB.store_exists('score'):
+    DB.store_put('score', 0)
+if not DB.store_exists('board'):
+    DB.store_put('board', {})
 DB.store_sync()
 
 THEME = {'dark': {'background': get_color_from_hex('303030'),
