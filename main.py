@@ -124,13 +124,6 @@ def free_positions(board, shape):
             pass
     return place
 
-def play_sound(sound_key):
-    global SOUND
-    if SOUND:
-        sound = SoundLoader.load(SOUNDS[sound_key]['path'])
-        sound.volume = SOUNDS[sound_key]['volume']
-        sound.play()
-
 
 class Shape(GridLayout):
     """
@@ -213,7 +206,7 @@ class CustomScatter(ScatterLayout):
             pass
         except IndexError:
             if (self.pre_pos != self.pos) and self.children[0].children:
-                play_sound('missed_placed')
+                self.parent.parent.sound.play('missed_placed')
             anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
 
@@ -247,19 +240,19 @@ class CustomScatter(ScatterLayout):
                     index += 1
 
                 parent = self.children[0]
-                play_sound('placed')
+                board.parent.sound.play('placed')
                 parent.clear_widgets()
                 root_class = parent.parent.parent.parent
                 self.clear_lines(get_lines(board_labels))
                 if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
-                    play_sound('new_shapes')
+                    board.parent.sound.play('new_shapes')
                     root_class.coming_shapes()
 
             else:
                 raise IndexError
         except IndexError:
             if self.pre_pos != self.pos:
-                play_sound('missed_placed')
+                board.parent.sound.play('missed_placed')
             anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
 
@@ -300,7 +293,7 @@ class CustomScatter(ScatterLayout):
                 all_labels.extend(labels)
                 all_colored_labels.extend(colored_labels)
         if all_labels:
-            play_sound('line_clear')
+            self.parent.parent.sound.play('line_clear')
         for i in all_labels:
             i.filled = False
         for i in all_colored_labels:
@@ -323,12 +316,48 @@ class CustomScatter(ScatterLayout):
             board.create_on_end_popup()
 
 
+class Sound(object):
+    def __init__(self):
+        for sound_name, sound_info in SOUNDS.items():
+            sound_name = 'sound_'+sound_name
+            setattr(self, sound_name, None)
+            sound = getattr(self, sound_name)
+            sound = SoundLoader.load(sound_info['path'])
+            sound.volume = sound_info['volume']
+            sound.priority = sound_info['priority']
+            setattr(self, sound_name, sound)
+    
+    def get_sounds(self):
+        keys = filter(lambda x: x.find('sound_') != -1, self.__dict__.keys())
+        sounds = {}
+        for key in keys:
+            sounds.update({key: getattr(self, key)})
+        return sounds
+    
+    def play(self, sound_key):
+        global SOUND
+        sound_key = 'sound_'+sound_key
+        if SOUND:
+            played_sounds = filter(lambda x: x[1].state == 'play',
+                                    self.get_sounds().items())
+            sound = getattr(self, sound_key)
+            for sounds in played_sounds:
+                if sounds[1].priority >= sound.priority:
+                    sounds[1].stop()
+            sound.play()
+    
+    def stop(self):
+        sounds = map(lambda x: x[1], self.get_sounds().items())
+        for sound in sounds:
+            sound.stop()
+    
+
 class Kivy1010(GridLayout):
     score = NumericProperty(0)
     visual_score = NumericProperty(0)
     high_score = NumericProperty(0)
     theme = 'light'
-    sound = None
+    game_sound = None
     background = ''
     labels = ''
     popup = None
@@ -336,6 +365,7 @@ class Kivy1010(GridLayout):
     def __init__(self):
         super(Kivy1010, self).__init__()
         self.set_theme()
+        self.sound = Sound()
         self.high_score = self.get_record()
         self.popup = None
         self.create_on_start_popup()
@@ -399,9 +429,10 @@ class Kivy1010(GridLayout):
         button = self.get_pause_but()
         if button:
             self.score_board.remove_widget(button)
-
+        
     def go(self, *args):
         try:
+            self.sound.play('game_on')
             self.create_pause_but()
             self.high_score = self.get_record()
             self.score = 0
@@ -427,6 +458,8 @@ class Kivy1010(GridLayout):
         button = args[0]
         SOUND = not SOUND
         button.image.source = 'assets/sound_%s.png' % (SOUND and 'on' or 'off')
+        if not SOUND:
+            self.sound.stop()
 
     def create_on_start_popup(self, *args):
         global SOUND
