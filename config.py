@@ -54,7 +54,7 @@ SOUNDS = {'placed': {'path': 'assets/sounds/placed.wav', 'volume': .8, 'priority
                    'missed_placed': {'path': 'assets/sounds/missed_placed.wav', 'volume': .4, 'priority': 4},
                    'line_clear': {'path': 'assets/sounds/line_clear.wav', 'volume': .2, 'priority': 1},
                    'new_shapes': {'path': 'assets/sounds/new_shapes.wav', 'volume': .5, 'priority': 3},
-                   'game_on': {'path': 'assets/sounds/game_on.wav', 'volume': .3, 'priority': 0}}
+                   'game_on': {'path': 'assets/sounds/game_on.wav', 'volume': 0, 'priority': 0}}
 
 COLOR = [get_color_from_hex('DC6555'),  # red
                 get_color_from_hex('5BBEE5'),  # light blue
