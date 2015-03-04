@@ -324,14 +324,14 @@ class Sound(object):
             sound.volume = sound_info['volume']
             sound.priority = sound_info['priority']
             setattr(self, sound_name, sound)
-    
+
     def get_sounds(self):
         keys = filter(lambda x: x.find('sound_') != -1, self.__dict__.keys())
         sounds = {}
         for key in keys:
             sounds.update({key: getattr(self, key)})
         return sounds
-    
+
     def play(self, sound_key):
         global SOUND
         sound_key = 'sound_'+sound_key
@@ -343,12 +343,12 @@ class Sound(object):
                 if sounds[1].priority >= sound.priority:
                     sounds[1].stop()
             sound.play()
-    
+
     def stop(self):
         sounds = map(lambda x: x[1], self.get_sounds().items())
         for sound in sounds:
             sound.stop()
-    
+
 
 class Kivy1010(GridLayout):
     score = NumericProperty(0)
@@ -373,19 +373,19 @@ class Kivy1010(GridLayout):
 
     def set_score(self):
         self.score = DB.store_get('score')
-    
+
     def sync_score(self, score):
         DB.store_put('score', score)
         DB.store_sync()
-    
+
     def sync_board(self, board):
         DB.store_put('board', board)
         DB.store_sync()
-    
+
     def get_synced_board(self):
         board = DB.store_get('board')
         return board
-    
+
     def update_score(self):
         if self.score > self.visual_score:
             self.visual_score += 1
@@ -430,7 +430,7 @@ class Kivy1010(GridLayout):
             button = Button(background_color=get_color_from_hex('E2DDD5'), size_hint=(None, 1), width=50,
                             disabled=False)
             button.bind(on_press=self.create_on_start_popup)
-            button.image.source = 'assets/pause_%s.png' % (self.theme == 'dark' and 'dark' or 'sun')
+            button.image.source = 'assets/images/pause_%s.png' % (self.theme == 'dark' and 'dark' or 'sun')
             self.score_board.add_widget(button)
 
     def pause_change_disability(self):
@@ -444,16 +444,16 @@ class Kivy1010(GridLayout):
         button = self.get_pause_but()
         if button:
             self.score_board.remove_widget(button)
-        
+
     def clear_lines(self, indexes):
         self.coming.children[0].clear_lines(indexes, score_update=False)
-    
+
     def go(self, *args):
         try:
             try:
                 button = args[0]
-                if button.image.source == 'assets/refresh.png':
-                    self.sync_score(0)                    
+                if button.image.source == 'assets/images/refresh.png':
+                    self.sync_score(0)
                     self.sync_board({})
             except IndexError:
                 pass
@@ -484,7 +484,7 @@ class Kivy1010(GridLayout):
         global SOUND
         button = args[0]
         SOUND = not SOUND
-        button.image.source = 'assets/sound_%s.png' % (SOUND and 'on' or 'off')
+        button.image.source = 'assets/images/sound_%s.png' % (SOUND and 'on' or 'off')
         DB.store_put('sound', SOUND)
         DB.store_sync()
         if not SOUND:
@@ -495,18 +495,18 @@ class Kivy1010(GridLayout):
         button = Button(background_color=get_color_from_hex('58CB85'))
         boxlayout = BoxLayout(orientation='vertical')
         set_color(boxlayout, get_color_from_hex('E2DDD5'))
-        img = Image(source='assets/medal.png')
+        img = Image(source='assets/images/medal.png')
         label = Label(text=str(self.get_record()), color=get_color_from_hex('5BBEE5'), font_size=30)
         boxlayout.add_widget(img)
         boxlayout.add_widget(label)
         theme = Button(text_width=(self.width, None), halign='left')
-        theme.image.source = self.theme == 'dark' and 'assets/sun.png' or 'assets/moon.png'
+        theme.image.source = self.theme == 'dark' and 'assets/images/sun.png' or 'assets/images/moon.png'
 
         layout = GridLayout(cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
 
         if args:
             restart = Button(background_color=get_color_from_hex('EC9449'))
-            restart.image.source = 'assets/refresh.png'
+            restart.image.source = 'assets/images/refresh.png'
             restart.bind(on_press=self.go)
             button.bind(on_press=self.keep_on)
             theme.bind(on_press=self.change_just_theme)
@@ -523,7 +523,7 @@ class Kivy1010(GridLayout):
         layout.add_widget(boxlayout)
         sound_theme_box = GridLayout(cols=2, rows=1, spacing=(2, 0))
         sound = Button(background_color=get_color_from_hex('EC9449'))
-        sound.image.source = 'assets/sound_%s.png' % (SOUND and 'on' or 'off')
+        sound.image.source = 'assets/images/sound_%s.png' % (SOUND and 'on' or 'off')
         sound.bind(on_press=self.change_sound)
         sound_theme_box.add_widget(theme)
         sound_theme_box.add_widget(sound)
@@ -538,7 +538,7 @@ class Kivy1010(GridLayout):
         global SOUND
         self.remove_pause_but()
         label1 = Label(text='No Moves Left', color=get_color_from_hex('5BBEE5'))
-        img = Image(source='assets/medal.png')
+        img = Image(source='assets/images/medal.png')
         label2 = Label(text=str(self.score), font_size=30, color=get_color_from_hex('5BBEE5'))
         button = Button(background_color=get_color_from_hex('58CB85'))
         button.bind(on_press=self.go)
@@ -550,11 +550,11 @@ class Kivy1010(GridLayout):
 
         theme = Button(text_width=(self.width, None), halign='left')
         theme.bind(on_press=self.change_theme)
-        theme.image.source = self.theme == 'dark' and 'assets/sun.png' or 'assets/moon.png'
+        theme.image.source = self.theme == 'dark' and 'assets/images/sun.png' or 'assets/images/moon.png'
 
         sound_theme_box = GridLayout(cols=2, rows=1, spacing=(2, 0))
         sound = Button(background_color=get_color_from_hex('EC9449'))
-        sound.image.source = 'assets/sound_%s.png' % (SOUND and 'on' or 'off')
+        sound.image.source = 'assets/images/sound_%s.png' % (SOUND and 'on' or 'off')
         sound.bind(on_press=self.change_sound)
         sound_theme_box.add_widget(theme)
         sound_theme_box.add_widget(sound)
@@ -618,7 +618,7 @@ class Kivy1010(GridLayout):
                     box = Label(size_hint=(None, None), size=(25, 25))
                     set_color(box, self.background)
                 else:
-                    box = Image(source='assets/trans.png', size_hint=(None, None), size=(25, 25))
+                    box = Image(source='assets/images/trans.png', size_hint=(None, None), size=(25, 25))
                 index += 1
                 if index % shape.cols == 0:
                     height += 26
@@ -677,7 +677,7 @@ class KivyMinesApp(App):
         super(KivyMinesApp, self).__init__(**kwargs)
         Builder.load_file('assets/1010.kv')
         self.title = 'Kivy 1010'
-        self.icon = 'assets/cube.png'
+        self.icon = 'assets/images/cube.png'
 
     def build(self):
         def resize(*args, **kwargs):
@@ -687,7 +687,7 @@ class KivyMinesApp(App):
                 root.resize_all(root.width)
             except IndexError:
                 pass
-        
+
         def save_board(*args, **kwargs):
             window, = args
             root = window.children[0]
@@ -707,7 +707,7 @@ class KivyMinesApp(App):
                 DB.store_sync()
             except AttributeError:
                 pass
-                
+
         mines = Kivy1010()
         Window.bind(on_resize=resize)
         Window.bind(on_close=save_board)

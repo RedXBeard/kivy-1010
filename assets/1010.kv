@@ -22,7 +22,7 @@
 	image: image
 	Image:
 	    id: image
-	    source: 'assets/play.png'
+	    source: 'assets/images/play.png'
 	    pos: self.parent.pos[0]+self.parent.width/2-self.width/2, self.parent.pos[1]+self.parent.height/2-self.height/2
         size: map(lambda x: x/2, self.parent.size)
 	    on_size: self.size=map(lambda x: x/2, self.parent.size)
@@ -106,7 +106,7 @@ Image:
             text_size: self.width, None
             halign: 'right'
         Image:
-            source: 'assets/medal.png'
+            source: 'assets/images/medal.png'
             size_hint: None, None
             size: 30, 50
         Label:
