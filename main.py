@@ -1,6 +1,9 @@
-__version__ = '1.3.0'
+__version__ = '1.4.0'
+
+import webbrowser
 
 from random import randint
+from requests import get as GET_REQ
 
 from kivy.app import App
 from kivy.lang import Builder
@@ -148,12 +151,15 @@ class CustomScatter(ScatterLayout):
     wh_per = 25
     def on_transform_with_touch(self, touch):
         super(CustomScatter, self).on_transform_with_touch(touch)
-        if self.do_translation_x and self.do_translation_y:
-            shape = self.children[0].children[0]
-            for label in shape.children:
-                label.size = (self.wh_per+3, self.wh_per+3)
-            shape.spacing = (5, 5)
-
+        try:
+            if self.do_translation_x and self.do_translation_y:
+                shape = self.children[0].children[0]
+                for label in shape.children:
+                    label.size = (self.wh_per+3, self.wh_per+3)
+                shape.spacing = (5, 5)
+        except IndexError:
+            pass
+            
     def on_bring_to_front(self, touch):
         super(CustomScatter, self).on_bring_to_front(touch)
 
@@ -207,10 +213,11 @@ class CustomScatter(ScatterLayout):
         except AttributeError:
             pass
         except IndexError:
-            if (self.pre_pos != self.pos) and self.children[0].children:
-                self.parent.parent.sound.play('missed_placed')
-            anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
-            anim.start(self)
+            if hasattr(self, 'pre_pos'):
+                if (self.pre_pos != self.pos) and self.children[0].children:
+                    self.parent.parent.sound.play('missed_placed')
+                anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
+                anim.start(self)
 
     def get_colored_area(self, board, label, **kwargs):
         """
@@ -493,8 +500,33 @@ class Kivy1010(GridLayout):
         DB.store_sync()
         if not SOUND:
             self.sound.stop()
-
+    
+    def open_page(self, *args):
+            webbrowser.open(args[1])
+            
+    def check_update(self, *args):
+        resp = GET_REQ("https://github.com/RedXBeard/kivy-1010/releases/latest")
+        current_version = int("".join(resp.url.split("/")[-1].split(".")))
+        lbl = Label(text="Already in Newest Version", shorten=True, strip=True, font_size=14, color=(0,0,0,1))
+        if current_version > int("".join(__version__.split('.'))):
+            lbl.text="Newer Version Released please check \n[color=3148F5][i][ref=https://github.com/RedXBeard/kivy-1010]Kivy1010[/ref][/i][/color]"
+            lbl.bind(on_ref_press=self.open_page)
+        if self.popup:
+            self.popup.dismiss()
+        
+        button = Button(background_color=get_color_from_hex('58CB85'), id="updater")
+        button.bind(on_press=self.create_on_start_popup)
+        layout = GridLayout(cols=1, rows=2, spacing=(10, 10), padding=(3, 6, 3, 6))
+        layout.add_widget(lbl)
+        layout.add_widget(button)
+        self.popup = Popup(content=layout, size_hint=(None, None), size=(300, 200), title='Kivy 1010',
+                           title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
+                           separator_color=get_color_from_hex('7B8ED4'))
+        self.popup.open()
+        
     def create_on_start_popup(self, *args):
+        if self.popup:
+            self.popup.dismiss()
         self.remove_pause_but()
         button = Button(background_color=get_color_from_hex('58CB85'))
         boxlayout = BoxLayout(orientation='vertical')
@@ -506,9 +538,10 @@ class Kivy1010(GridLayout):
         theme = Button(text_width=(self.width, None), halign='left')
         theme.image.source = self.theme == 'dark' and 'assets/images/sun.png' or 'assets/images/moon.png'
 
-        layout = GridLayout(cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
-
-        if args:
+        layout = GridLayout(cols=1, rows=4, spacing=(10, 10), padding=(3, 6, 3, 6))
+        
+        state = 'pre_play'
+        if args and args[0].id != 'updater':
             restart = Button(background_color=get_color_from_hex('EC9449'))
             restart.image.source = 'assets/images/refresh.png'
             restart.bind(on_press=self.go)
@@ -518,8 +551,9 @@ class Kivy1010(GridLayout):
             play_restart_box.add_widget(button)
             play_restart_box.add_widget(restart)
             layout.add_widget(play_restart_box)
+            state = "paused"
 
-        if not args:
+        else:
             layout.add_widget(button)
             button.bind(on_press=self.go)
             theme.bind(on_press=self.change_theme)
@@ -532,8 +566,16 @@ class Kivy1010(GridLayout):
         sound_theme_box.add_widget(theme)
         sound_theme_box.add_widget(sound)
         layout.add_widget(sound_theme_box)
-
-        self.popup = Popup(content=layout, size_hint=(None, None), size=(200, 300), title='Kivy 1010',
+        
+        if state != 'paused':
+            update_button = Button(background_color=get_color_from_hex('EC9449'), 
+                                          text="Check for Update", size_hint=(1., None), height=35, 
+                                          color=get_color_from_hex('F0F0F0'))
+            update_button.bind(on_press=self.check_update)
+            update_button.image.source = "assets/images/trans.png"
+            layout.add_widget(update_button)
+            
+        self.popup = Popup(content=layout, size_hint=(None, None), size=(200, 350), title='Kivy 1010',
                            title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
                            separator_color=get_color_from_hex('7B8ED4'))
         self.popup.open()
@@ -567,7 +609,8 @@ class Kivy1010(GridLayout):
         layout.add_widget(boxlayout)
         layout.add_widget(button)
         layout.add_widget(sound_theme_box)
-        self.popup = Popup(content=layout, size_hint=(None, None), size=(200, 300), title='Kivy 1010',
+        
+        self.popup = Popup(content=layout, size_hint=(None, None), size=(200, 350), title='Kivy 1010',
                            title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
                            separator_color=get_color_from_hex('7B8ED4'))
         self.popup.open()
@@ -674,28 +717,30 @@ class Kivy1010(GridLayout):
             per_shape_height = self.coming.height
             for scatter in scatters:
                 scatter.calculate_shape_size()
-                shape = scatter.children[0].children[0]
-                width = 0
-                height = 0
-                index = 0
-                for label in shape.children:
-                    label.size = (scatter.wh_per, scatter.wh_per)
-
-                    if index % shape.cols == 0:
-                        height += scatter.wh_per + 1
+                floatlayout = scatter.children[0]
+                if floatlayout.children:
+                    shape = floatlayout.children[0]
+                    width = 0
+                    height = 0
+                    index = 0
+                    for label in shape.children:
+                        label.size = (scatter.wh_per, scatter.wh_per)
     
-                    if index % shape.rows == 0:
-                        width += scatter.wh_per + 1
-                    index += 1
+                        if index % shape.cols == 0:
+                            height += scatter.wh_per + 1
+        
+                        if index % shape.rows == 0:
+                            width += scatter.wh_per + 1
+                        index += 1
+                        
+                    index = scatters.index(scatter)
                     
-                index = scatters.index(scatter)
-                
-                scatter.size_hint = (None, None)
-                scatter.size = (width, height)
-                scatter_pos_x = (per_shape_width * index) + ((per_shape_width - scatter.size[0])/2)
-                scatter_pos_y = (per_shape_height - scatter.size[1]) / 2
-                scatter.pos = (scatter_pos_x, scatter_pos_y)
-                scatter.pre_pos = scatter.pos
+                    scatter.size_hint = (None, None)
+                    scatter.size = (width, height)
+                    scatter_pos_x = (per_shape_width * index) + ((per_shape_width - scatter.size[0])/2)
+                    scatter_pos_y = (per_shape_height - scatter.size[1]) / 2
+                    scatter.pos = (scatter_pos_x, scatter_pos_y)
+                    scatter.pre_pos = scatter.pos
         except:
             pass
 

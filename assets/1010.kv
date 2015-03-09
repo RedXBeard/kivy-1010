@@ -50,8 +50,7 @@
             size: 6, 6
             pos: self.pos[0]+self.width-6, self.pos[1]+self.height-6
     filled: False
-        #Line:
-        #    rounded_rectangle: self.pos[0], self.pos[1], self.size[0], self.size[1], 5, 100
+    markup: True
 
 Image:
     filled: False
@@ -66,7 +65,7 @@ Image:
     comingLeft: comingLeft
     comingMid: comingMid
     comingRight: comingRight
-
+            
     GridLayout:
         canvas.before:
             Color:
