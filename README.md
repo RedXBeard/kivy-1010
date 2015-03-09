@@ -15,6 +15,12 @@
 - Code cleaned.
 - Performance fixes.
 
+##### 1.3.0
+- Sound effects added.
+- Session saved on exit.
+- Window width-height fixing disabled.
+- Shapes probability of appearing calculation fixed.
+
 ## Installation
 
 #### For MacOS
