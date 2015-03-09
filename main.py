@@ -1,9 +1,8 @@
 __version__ = '1.4.0'
 
 import webbrowser
-
+from urllib2 import urlopen
 from random import randint
-from requests import get as GET_REQ
 
 from kivy.app import App
 from kivy.lang import Builder
@@ -505,7 +504,7 @@ class Kivy1010(GridLayout):
             webbrowser.open(args[1])
             
     def check_update(self, *args):
-        resp = GET_REQ("https://github.com/RedXBeard/kivy-1010/releases/latest")
+        resp = urlopen("https://github.com/RedXBeard/kivy-1010/releases/latest")
         current_version = int("".join(resp.url.split("/")[-1].split(".")))
         lbl = Label(text="Already in Newest Version", shorten=True, strip=True, font_size=14, color=(0,0,0,1))
         if current_version > int("".join(__version__.split('.'))):
