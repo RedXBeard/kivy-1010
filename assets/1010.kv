@@ -58,7 +58,7 @@ Image:
 <Kivy1010>
     cols: 1
     rows: 3
-    padding: 20, 10, 20, 10
+    padding: 20, 10, 20, 0
     score_board: score_board
     board: board
     coming: coming
@@ -92,7 +92,7 @@ Image:
         visual_score_label: visual_score_label
         cols: 4
         rows: 1
-        size_hint: 1, None
+        size_hint: None, None
         spacing: 4, 4
         height: 50
         Label:
@@ -123,7 +123,7 @@ Image:
         cols: 10
         rows: 10
         spacing: 3, 3
-        size_hint_y: None
+        size_hint: None, None
 
     FloatLayout:
         id: coming

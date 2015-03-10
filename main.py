@@ -20,7 +20,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.properties import NumericProperty
 from kivy.core.audio import SoundLoader
-from config import DB, THEME, COLOR, SHAPES, SOUNDS
+from config import DB, THEME, COLOR, SHAPES, SOUNDS, WIN_SIZE
 
 # SCORE calculation
 """
@@ -697,13 +697,14 @@ class Kivy1010(GridLayout):
         try:
             self.score_board.visual_score_label.size = (width / 2 - 40,
                                                                                       self.score_board.visual_score_label.size[1])
+            self.score_board.width = width - 40
         except:
             pass
 
         try:
-            wh =  min((330 * width / 520), (330 * height / 600))
+            wh =  min((330.0 * width / 520), (330.0 * height / 600))
             padding = (width > wh)  and (width - wh) / 2 - 20 or 0
-            self.board.width = self.board.height = wh
+            self.board.width = self.board.height = wh + 10
             for label in self.board.children:
                 label.width = label.height = wh / 11
             self.board.padding = (padding, 10, padding, 10)
@@ -712,32 +713,31 @@ class Kivy1010(GridLayout):
 
         try:
             scatters = [self.comingLeft, self.comingMid, self.comingRight]
+            self.coming.height = float(height) - float(self.board.height) - 50.0
             per_shape_width = float(width) / 3
-            per_shape_height = self.coming.height
+            per_shape_height = float(self.coming.height)
             for scatter in scatters:
                 scatter.calculate_shape_size()
                 floatlayout = scatter.children[0]
                 if floatlayout.children:
                     shape = floatlayout.children[0]
-                    width = 0
-                    height = 0
+                    shape_width = 0
+                    shape_height = 0
                     index = 0
                     for label in shape.children:
                         label.size = (scatter.wh_per, scatter.wh_per)
     
                         if index % shape.cols == 0:
-                            height += scatter.wh_per + 1
+                            shape_height += scatter.wh_per + 1
         
                         if index % shape.rows == 0:
-                            width += scatter.wh_per + 1
+                            shape_width += scatter.wh_per + 1
                         index += 1
-                        
                     index = scatters.index(scatter)
-                    
                     scatter.size_hint = (None, None)
-                    scatter.size = (width, height)
+                    scatter.size = (shape_width, shape_height)
                     scatter_pos_x = (per_shape_width * index) + ((per_shape_width - scatter.size[0])/2)
-                    scatter_pos_y = (per_shape_height - scatter.size[1]) / 2
+                    scatter_pos_y = max(0, (per_shape_height - scatter.size[1]) / 2)
                     scatter.pos = (scatter_pos_x, scatter_pos_y)
                     scatter.pre_pos = scatter.pos
         except:
@@ -752,13 +752,19 @@ class KivyMinesApp(App):
         self.icon = 'assets/images/cube.png'
 
     def build(self):
+        def restore(window):
+            window.size = WIN_SIZE
+                    
         def resize(*args, **kwargs):
             window, width, height = args
-            try:
-                root = filter(lambda x: str(x).find('Kivy1010') != -1, window.children)[0]
-                root.resize_all(root.width, root.height)
-            except IndexError:
-                pass
+            if width < 520 or height < 600:
+                restore(window)
+            else:
+                try:
+                    root = filter(lambda x: str(x).find('Kivy1010') != -1, window.children)[0]
+                    root.resize_all(float(root.width), float(root.height))
+                except IndexError:
+                    pass
 
         def save_board(*args, **kwargs):
             window, = args
@@ -783,13 +789,12 @@ class KivyMinesApp(App):
         mines = Kivy1010()
         Window.bind(on_resize=resize)
         Window.bind(on_close=save_board)
-
         return mines
 
 
 
 if __name__ == '__main__':
-    Window.size = (520, 600)
+    Window.size = WIN_SIZE
     Window.borderless = False
     Config.set('kivy', 'desktop', 1)
     Config.set('input', 'mouse', 'mouse,multitouch_on_demand')

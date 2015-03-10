@@ -45,6 +45,8 @@ if not DB.store_exists('board'):
     DB.store_put('board', {})
 DB.store_sync()
 
+WIN_SIZE = (520, 600)
+
 THEME = {'dark': {'background': get_color_from_hex('303030'),
                   'labels': get_color_from_hex('666666')},
          'light': {'background': get_color_from_hex('F0F0F0'),
