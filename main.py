@@ -375,6 +375,7 @@ class Kivy1010(GridLayout):
     score = NumericProperty(0)
     visual_score = NumericProperty(0)
     high_score = NumericProperty(0)
+    lightup_anim = []
     free_place = []
     free_place_notifier = ""
     theme = 'light'
@@ -393,7 +394,8 @@ class Kivy1010(GridLayout):
         self.popup = None
         self.create_on_start_popup()
         Clock.schedule_once(lambda dt: self.update_score(), .03)
-        self.movement_detect()
+        # Not Yet complete. will be available on 1.5.0 version
+        #self.movement_detect()
 
     def set_score(self):
         self.score = DB.store_get('score')
@@ -416,8 +418,11 @@ class Kivy1010(GridLayout):
 
     def clear_free_place(self):
         for place in self.free_place:
-            set_color(self.board.children[place], self.labels)
-    
+            position = self.board.children[place]
+            color = get_color(position)
+            Animation.cancel_all(color, 'rgba')
+            set_color(position, self.labels)
+            
     def lightup(self):
         labels = []
         for index in self.free_place:
