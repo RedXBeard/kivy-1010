@@ -64,25 +64,32 @@ def shape_on_box(shape, label_index):
     return shape_box_on_board
 
 
-def check_occupied(board, board_row, shape_objs):
+def check_occupied(board, board_row, shape_objs, return_position=False):
     """
     Check if given possible position list which is
     generated/found with 'shape_on_box' method
     is already occupied with other shape or not
     """
     occupied = False
+    positions = []
     if not board_row:
         occupied = True
     index = 0
     for i in board_row:
         board_label = board.children[i]
+        shape_label = str(shape_objs[index]).find('Label') != -1
         if board_label.filled:
-            if str(shape_objs[index]).find('Label') != -1:
+            if shape_label:
                 occupied = True
                 break
+        else:
+            if shape_label:
+                positions.append(i)
         index += 1
-    return occupied
-
+    if return_position:
+        return occupied, positions
+    else:
+        return occupied
 
 def get_lines(indexes):
     """
@@ -116,14 +123,14 @@ def free_positions(board, shape):
         shape_objs = shape.children
         try:
             shape_box_on_board = shape_on_box(shape, label_index)
-            occupied = check_occupied(board, shape_box_on_board, shape_objs)
+            occupied, positions = check_occupied(board, shape_box_on_board, shape_objs, return_position=True)
             if occupied:
                 raise IndexError
             place = True
             break
         except:
             pass
-    return place, shape_box_on_board
+    return place, positions
 
 
 class Shape(GridLayout):
@@ -278,6 +285,8 @@ class CustomScatter(ScatterLayout):
         free_place = []
         for shape in active_shapes:
             result, place = free_positions(board, shape)
+            if result:
+                free_place.append(place)
             possible_places = possible_places or result
 
         board.parent.score += plus_score
@@ -285,7 +294,7 @@ class CustomScatter(ScatterLayout):
             board.parent.free_place = []
             CustomScatter.change_movement(board.parent)
         else:
-            board.parent.free_place = place
+            board.parent.free_place = free_place[0]
 
     def clear_lines(self, lines, score_update=True):
         """
@@ -751,6 +760,7 @@ class Kivy1010(GridLayout):
                 anim.start(color)
         DB.store_put('shapes', [])
         DB.store_sync()
+        self.clear_free_place()
 
     def resize_all(self, width, height):
         try:
