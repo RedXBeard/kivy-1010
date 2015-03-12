@@ -3,6 +3,7 @@ __version__ = '1.4.0'
 import webbrowser
 from urllib2 import urlopen
 from random import randint
+from datetime import datetime, timedelta
 
 from kivy.app import App
 from kivy.lang import Builder
@@ -109,6 +110,7 @@ def free_positions(board, shape):
     """
     pos_on_board = board.children#filter(lambda x: not x.filled, board.children)
     place = False
+    shape_box_on_board = []
     for pos in pos_on_board:
         label_index = board.children.index(pos)
         shape_objs = shape.children
@@ -121,22 +123,22 @@ def free_positions(board, shape):
             break
         except:
             pass
-    return place
+    return place, shape_box_on_board
 
 
 class Shape(GridLayout):
     """
     Generate shapes from given already set list with random colour.
     """
-    def __init__(self):
+    def __init__(self, rows=None, cols=None, array=None, color=None):
         super(Shape, self).__init__()
         shape_key = SHAPES.keys()[randint(0, len(SHAPES.keys()) - 1)]
         shape = SHAPES[shape_key][randint(0, len(SHAPES[shape_key]) - 1)]
-        color = COLOR[randint(0, len(COLOR) - 1)]
-        self.rows = shape['rows']
-        self.cols = shape['cols']
-        self.array = shape['array']
-        self.color = color
+        ccolor = COLOR[randint(0, len(COLOR) - 1)]
+        self.rows = rows and rows or shape['rows']
+        self.cols = cols and cols or shape['cols']
+        self.array = array and array or shape['array']
+        self.color = color and color or ccolor
 
     def get_colors(self):
         result = []
@@ -148,8 +150,12 @@ class Shape(GridLayout):
 
 class CustomScatter(ScatterLayout):
     wh_per = 25
+    last_moved = None
     def on_transform_with_touch(self, touch):
         super(CustomScatter, self).on_transform_with_touch(touch)
+        last_moved = datetime.now()
+        root = self.parent.parent
+        root.clear_free_place()
         try:
             if self.do_translation_x and self.do_translation_y:
                 shape = self.children[0].children[0]
@@ -269,13 +275,17 @@ class CustomScatter(ScatterLayout):
                                     board.parent.coming.children)))
 
         possible_places = False
+        free_place = []
         for shape in active_shapes:
-            result = free_positions(board, shape)
+            result, place = free_positions(board, shape)
             possible_places = possible_places or result
 
         board.parent.score += plus_score
         if not possible_places:
+            board.parent.free_place = []
             CustomScatter.change_movement(board.parent)
+        else:
+            board.parent.free_place = place
 
     def clear_lines(self, lines, score_update=True):
         """
@@ -365,6 +375,8 @@ class Kivy1010(GridLayout):
     score = NumericProperty(0)
     visual_score = NumericProperty(0)
     high_score = NumericProperty(0)
+    free_place = []
+    free_place_notifier = ""
     theme = 'light'
     game_sound = None
     background = ''
@@ -381,6 +393,7 @@ class Kivy1010(GridLayout):
         self.popup = None
         self.create_on_start_popup()
         Clock.schedule_once(lambda dt: self.update_score(), .03)
+        self.movement_detect()
 
     def set_score(self):
         self.score = DB.store_get('score')
@@ -396,11 +409,40 @@ class Kivy1010(GridLayout):
     def get_synced_board(self):
         board = DB.store_get('board')
         return board
+    
+    def get_synced_shapes(self):
+        shapes = DB.store_get('shapes')
+        return shapes
 
+    def clear_free_place(self):
+        for place in self.free_place:
+            set_color(self.board.children[place], self.labels)
+    
+    def lightup(self):
+        labels = []
+        for index in self.free_place:
+            labels.append(get_color(self.board.children[index]))
+        for color in labels:
+            anim = Animation(rgba=self.free_place_notifier, d=5, t='out_elastic')
+            anim.start(color)
+            
+        if self.free_place_notifier == self.background:
+            self.free_place_notifier =  self.labels 
+        else:
+            self.free_place_notifier = self.background
+            
     def update_score(self):
         if self.score > self.visual_score:
             self.visual_score += 1
         Clock.schedule_once(lambda dt: self.update_score(), .03)
+    
+    def movement_detect(self):
+        if self.free_place:
+            if filter(lambda x: datetime.now() - x.last_moved > timedelta(seconds=5), 
+                            (self.comingLeft, self.comingMid, self.comingRight)):
+                self.lightup()
+        Clock.schedule_once(lambda dt: self.movement_detect(), 5)
+    
 
     def change_just_theme(self, *args):
         theme = filter(lambda x: x != self.theme, THEME.keys())[0]
@@ -418,6 +460,7 @@ class Kivy1010(GridLayout):
         self.theme = theme
         self.background = THEME.get(theme).get('background')
         self.labels = THEME.get(theme).get('labels')
+        self.free_place_notifier = self.background
         self.change_board_color(self.labels)
         Window.clearcolor = self.background
         DB.store_put('theme', theme)
@@ -646,6 +689,7 @@ class Kivy1010(GridLayout):
             self.board.add_widget(label)
 
     def coming_shapes(self):
+        shapes = self.get_synced_shapes()
         scatters = [self.comingLeft, self.comingMid, self.comingRight]
         for scatter in scatters:
             scatter.clear_widgets()
@@ -657,8 +701,15 @@ class Kivy1010(GridLayout):
 
         for scatter in scatters:
             scatter.calculate_shape_size()
-            
-            shape = Shape()
+            shape = None
+            try:
+                pre_shape = shapes[scatters.index(scatter)]
+                shape = Shape(pre_shape['rows'], pre_shape['cols'], 
+                                          pre_shape['array'], pre_shape['color'])
+            except IndexError:
+                pass
+            if not shape:
+                shape = Shape()
             width = 0
             height = 0
             index = 0
@@ -684,6 +735,7 @@ class Kivy1010(GridLayout):
             scatter_pos_y = (per_shape_height - scatter.size[1]) / 2
             scatter.pos = (scatter_pos_x, scatter_pos_y)
             scatter.pre_pos = scatter.pos
+            scatter.last_moved = datetime.now()
 
             scatter.add_widget(shape)
             label_colors = shape.get_colors()
@@ -692,6 +744,8 @@ class Kivy1010(GridLayout):
             for color in label_colors:
                 anim = Animation(rgba=shape.color, d=.2, t='in_circ')
                 anim.start(color)
+        DB.store_put('shapes', [])
+        DB.store_sync()
 
     def resize_all(self, width, height):
         try:
@@ -777,7 +831,7 @@ class KivyMinesApp(App):
                     index = 0
                     for label in board:
                         color = get_color(label)
-                        if board_default_color != color.rgba:
+                        if label.filled:
                             board_visual.update({index: color.rgba})
                         index += 1
                 DB.store_put('board', board_visual)
@@ -785,6 +839,25 @@ class KivyMinesApp(App):
                 DB.store_sync()
             except AttributeError:
                 pass
+            
+            try:
+                scatters = [root.comingLeft, root.comingMid, root.comingRight]
+                shapes = []
+                for scatter in scatters:
+                    layout = scatter.children[0]
+                    try:
+                        shape = layout.children[0]
+                        pre_shape = dict(rows=shape.rows,
+                                                      cols=shape.cols,
+                                                      array=shape.array,
+                                                      color=shape.color)
+                        shapes.append(pre_shape)
+                    except IndexError:
+                        pass
+                DB.store_put('shapes', shapes)
+                DB.store_sync()
+            except AttributeError:
+                pass 
 
         mines = Kivy1010()
         Window.bind(on_resize=resize)

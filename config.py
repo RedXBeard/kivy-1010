@@ -43,6 +43,8 @@ if not DB.store_exists('score'):
     DB.store_put('score', 0)
 if not DB.store_exists('board'):
     DB.store_put('board', {})
+if not DB.store_exists('shapes'):
+    DB.store_put('shapes', [])
 DB.store_sync()
 
 WIN_SIZE = (520, 600)
