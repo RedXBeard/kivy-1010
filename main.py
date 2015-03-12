@@ -760,7 +760,8 @@ class Kivy1010(GridLayout):
                 anim.start(color)
         DB.store_put('shapes', [])
         DB.store_sync()
-        self.clear_free_place()
+        # movement  detect not yet complete
+        # self.clear_free_place()
 
     def resize_all(self, width, height):
         try:
