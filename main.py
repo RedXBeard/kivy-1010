@@ -137,11 +137,11 @@ class Shape(GridLayout):
     """
     Generate shapes from given already set list with random colour.
     """
-    def __init__(self, rows=None, cols=None, array=None, color=None):
+    def __init__(self, rows=None, cols=None, array=None, color=None, color_set=COLOR):
         super(Shape, self).__init__()
         shape_key = SHAPES.keys()[randint(0, len(SHAPES.keys()) - 1)]
         shape = SHAPES[shape_key][randint(0, len(SHAPES[shape_key]) - 1)]
-        ccolor = COLOR[randint(0, len(COLOR) - 1)]
+        ccolor = color_set[randint(0, len(color_set) - 1)]
         self.rows = rows and rows or shape['rows']
         self.cols = cols and cols or shape['cols']
         self.array = array and array or shape['array']
@@ -702,6 +702,14 @@ class Kivy1010(GridLayout):
                 label.filled = True
             self.board.add_widget(label)
 
+    def get_shapes(self):
+        result = []
+        shape_sets = map(lambda x: x.children, self.coming.children)
+        for s_set in shape_sets:
+            if s_set and s_set[0].children:
+                result.append(s_set[0].children[0])
+        return result
+        
     def coming_shapes(self):
         shapes = self.get_synced_shapes()
         scatters = [self.comingLeft, self.comingMid, self.comingRight]
@@ -723,7 +731,8 @@ class Kivy1010(GridLayout):
             except IndexError:
                 pass
             if not shape:
-                shape = Shape()
+                color_set = filter(lambda x: x not in map(lambda x: x.color, self.get_shapes()), COLOR)
+                shape = Shape(color_set=color_set)
             width = 0
             height = 0
             index = 0
