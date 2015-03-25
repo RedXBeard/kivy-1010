@@ -21,6 +21,13 @@
 - Window width-height fixing disabled.
 - Shapes probability of appearing calculation fixed.
 
+##### 1.4.0
+- Version control added on start popup.
+- Session saved on exit extended.
+- On window resizing, board and shapes take effect.
+- Optimum window size considered.
+- Shapes colours are unique on each session.
+
 ## Installation
 
 #### For MacOS
