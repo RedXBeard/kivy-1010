@@ -51,7 +51,7 @@ On launcher window type;
 
 <code>python /repository/path/main.py</code> in command box, 
 
-application icon path is <code>/repository/path/assets/cube.png</code> then 
+application icon path is <code>/repository/path/assets/images/cube.png</code> then 
 
 click <code>ok</code>. 
 
