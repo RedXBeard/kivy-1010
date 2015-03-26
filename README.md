@@ -1,8 +1,8 @@
 # kivy-1010
 1010 game implemented on python kivy for desktops
-<a href="url"><img src="http://s10.postimg.org/g8rs7ptkp/Screen_Shot_2015_03_25_at_13_13_39.png" align="right" height="370" width="300" ></a>
 
 ## Releases
+<a href="url"><img src="http://s10.postimg.org/g8rs7ptkp/Screen_Shot_2015_03_25_at_13_13_39.png" align="right" height="370" width="300" ></a>
 
 ##### 1.0.0
 - First release.
