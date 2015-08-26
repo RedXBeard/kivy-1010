@@ -19,8 +19,8 @@ from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
-from kivy.properties import NumericProperty
 from kivy.core.audio import SoundLoader
+from kivy.properties import NumericProperty
 from config import DB, THEME, COLOR, SHAPES, SOUNDS, WIN_SIZE
 
 # SCORE calculation
@@ -34,9 +34,13 @@ from config import DB, THEME, COLOR, SHAPES, SOUNDS, WIN_SIZE
 
 SOUND = False
 
+
 def get_color(obj):
+    u"""Color of widget returns."""
     try:
-        obj_color = filter(lambda x: str(x).find('Color') != -1, obj.canvas.before.children)[0]
+        obj_color = filter(
+            lambda x:
+                str(x).find('Color') != -1, obj.canvas.before.children)[0]
     except IndexError:
         obj_color = None
     return obj_color
@@ -49,6 +53,7 @@ def set_color(obj, color):
     except AttributeError:
         pass
 
+
 def shape_on_box(shape, label_index):
     """
     Find shapes probable positioned indexes on board
@@ -58,7 +63,9 @@ def shape_on_box(shape, label_index):
     line_left = (label_index / 10) * 10
     if shape.cols <= (label_index - line_left + 1):
         for i in range(0, shape.rows):
-            row = range(label_index + i * 10, (label_index + i * 10) - shape.cols, -1)
+            row = range(
+                label_index + i * 10,
+                (label_index + i * 10) - shape.cols, -1)
             row.reverse()
             shape_box_on_board.extend(row)
     return shape_box_on_board
@@ -91,10 +98,9 @@ def check_occupied(board, board_row, shape_objs, return_position=False):
     else:
         return occupied
 
+
 def get_lines(indexes):
-    """
-    in row and in cols indexes are taken.
-    """
+    """in row and in cols indexes are taken."""
     lines = []
     for i in indexes:
         tmp_cols = range(i % 10, 100, 10)
@@ -115,7 +121,7 @@ def free_positions(board, shape):
     check for the given shape is there any
     suitable position is available or not on board
     """
-    pos_on_board = board.children#filter(lambda x: not x.filled, board.children)
+    pos_on_board = board.children
     place = False
     shape_box_on_board = []
     for pos in pos_on_board:
@@ -123,7 +129,8 @@ def free_positions(board, shape):
         shape_objs = shape.children
         try:
             shape_box_on_board = shape_on_box(shape, label_index)
-            occupied, positions = check_occupied(board, shape_box_on_board, shape_objs, return_position=True)
+            occupied, positions = check_occupied(
+                board, shape_box_on_board, shape_objs, return_position=True)
             if occupied:
                 raise IndexError
             place = True
@@ -137,7 +144,9 @@ class Shape(GridLayout):
     """
     Generate shapes from given already set list with random colour.
     """
-    def __init__(self, rows=None, cols=None, array=None, color=None, color_set=COLOR):
+    def __init__(
+            self, rows=None, cols=None, array=None,
+            color=None, color_set=COLOR):
         super(Shape, self).__init__()
         shape_key = SHAPES.keys()[randint(0, len(SHAPES.keys()) - 1)]
         shape = SHAPES[shape_key][randint(0, len(SHAPES[shape_key]) - 1)]
@@ -148,19 +157,23 @@ class Shape(GridLayout):
         self.color = color and color or ccolor
 
     def get_colors(self):
+        """Return shape color"""
         result = []
-        for ch in self.children:
-            if str(ch).find('Label') != -1:
-                result.append(get_color(ch))
+        for child in self.children:
+            if str(child).find('Label') != -1:
+                result.append(get_color(child))
         return result
 
 
 class CustomScatter(ScatterLayout):
+    """Shape class"""
     wh_per = 25
     last_moved = None
+
     def on_transform_with_touch(self, touch):
+        """take action when shape touched."""
         super(CustomScatter, self).on_transform_with_touch(touch)
-        last_moved = datetime.now()
+        # last_moved = datetime.now()
         root = self.parent.parent
         root.clear_free_place()
         try:
@@ -171,7 +184,7 @@ class CustomScatter(ScatterLayout):
                 shape.spacing = (5, 5)
         except IndexError:
             pass
-            
+
     def on_bring_to_front(self, touch):
         super(CustomScatter, self).on_bring_to_front(touch)
 
@@ -194,9 +207,9 @@ class CustomScatter(ScatterLayout):
             pass
 
     def calculate_shape_size(self):
-        wh =  min((330 * Window.width / 520), (330 * Window.height / 600))
-        self.wh_per = (wh/11) -5
-    
+        wh = min((330 * Window.width / 520), (330 * Window.height / 600))
+        self.wh_per = (wh/11) - 5
+
     def position_calculation(self):
         """
         On board, taken scatter position is on a label or not check is handled
@@ -228,13 +241,16 @@ class CustomScatter(ScatterLayout):
             if hasattr(self, 'pre_pos'):
                 if (self.pre_pos != self.pos) and self.children[0].children:
                     self.parent.parent.sound.play('missed_placed')
-                anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
+                anim = Animation(
+                    x=self.pre_pos[0], y=self.pre_pos[1],
+                    t='linear', duration=.2)
                 anim.start(self)
 
     def get_colored_area(self, board, label, **kwargs):
         """
         To set found or untouched shape last position is available or
-        not checked and placed shape is disappeared if all gone new set is called
+        not checked and placed shape is disappeared
+        if all gone new set is called
         """
         plus_score = 0
         try:
@@ -265,7 +281,10 @@ class CustomScatter(ScatterLayout):
                 parent.clear_widgets()
                 root_class = parent.parent.parent.parent
                 self.clear_lines(get_lines(board_labels))
-                if not filter(lambda x: x, map(lambda x: x.children[0].children, parent.parent.parent.children)):
+                if not filter(
+                    lambda x: x,
+                        map(lambda x: x.children[0].children,
+                            parent.parent.parent.children)):
                     board.parent.sound.play('new_shapes')
                     root_class.coming_shapes()
 
@@ -274,12 +293,13 @@ class CustomScatter(ScatterLayout):
         except IndexError:
             if self.pre_pos != self.pos:
                 board.parent.sound.play('missed_placed')
-            anim = Animation(x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
+            anim = Animation(
+                x=self.pre_pos[0], y=self.pre_pos[1], t='linear', duration=.2)
             anim.start(self)
 
         active_shapes = map(lambda x: x[0], filter(lambda x: x,
                             map(lambda x: x.children[0].children,
-                                    board.parent.coming.children)))
+                                board.parent.coming.children)))
 
         possible_places = False
         free_place = []
@@ -327,7 +347,10 @@ class CustomScatter(ScatterLayout):
             anim = Animation(rgba=board.parent.labels, d=.9, t='in_out_back')
             anim.start(i)
         if score_update:
-            plus_score = len(all_labels) + ((block_count > 0 and (5 * (block_count - 1)) or 0) * block_count)
+            plus_score = len(all_labels) + (
+                (block_count > 0 and (
+                    5 * (block_count - 1)
+                ) or 0) * block_count)
             board.parent.score += plus_score
 
     @staticmethod
@@ -363,11 +386,12 @@ class Sound(object):
         return sounds
 
     def play(self, sound_key):
+        """Play sound"""
         global SOUND
         sound_key = 'sound_'+sound_key
         if SOUND:
-            played_sounds = filter(lambda x: x[1].state == 'play',
-                                    self.get_sounds().items())
+            played_sounds = filter(
+                lambda x: x[1].state == 'play', self.get_sounds().items())
             sound = getattr(self, sound_key)
             for sounds in played_sounds:
                 if sounds[1].priority >= sound.priority:
@@ -404,7 +428,7 @@ class Kivy1010(GridLayout):
         self.create_on_start_popup()
         Clock.schedule_once(lambda dt: self.update_score(), .03)
         # Not Yet complete. will be available on 1.5.0 version
-        #self.movement_detect()
+        # self.movement_detect()
 
     def set_score(self):
         self.score = DB.store_get('score')
@@ -420,7 +444,7 @@ class Kivy1010(GridLayout):
     def get_synced_board(self):
         board = DB.store_get('board')
         return board
-    
+
     def get_synced_shapes(self):
         shapes = DB.store_get('shapes')
         return shapes
@@ -431,32 +455,35 @@ class Kivy1010(GridLayout):
             color = get_color(position)
             Animation.cancel_all(color, 'rgba')
             set_color(position, self.labels)
-            
+
     def lightup(self):
         labels = []
         for index in self.free_place:
             labels.append(get_color(self.board.children[index]))
         for color in labels:
-            anim = Animation(rgba=self.free_place_notifier, d=5, t='out_elastic')
+            anim = Animation(
+                rgba=self.free_place_notifier, d=5, t='out_elastic')
             anim.start(color)
-            
+
         if self.free_place_notifier == self.background:
-            self.free_place_notifier =  self.labels 
+            self.free_place_notifier = self.labels
         else:
             self.free_place_notifier = self.background
-            
+
     def update_score(self):
         if self.score > self.visual_score:
             self.visual_score += 1
         Clock.schedule_once(lambda dt: self.update_score(), .03)
-    
+
     def movement_detect(self):
         if self.free_place:
-            if filter(lambda x: datetime.now() - x.last_moved > timedelta(seconds=5), 
-                            (self.comingLeft, self.comingMid, self.comingRight)):
+            detection = filter(
+                lambda x:
+                    datetime.now() - x.last_moved > timedelta(seconds=5),
+                        (self.comingLeft, self.comingMid, self.comingRight))
+            if detection:
                 self.lightup()
         Clock.schedule_once(lambda dt: self.movement_detect(), 5)
-    
 
     def change_just_theme(self, *args):
         theme = filter(lambda x: x != self.theme, THEME.keys())[0]
@@ -487,7 +514,9 @@ class Kivy1010(GridLayout):
 
     def get_pause_but(self):
         try:
-            button = filter(lambda x: str(x).find('Button') != -1, self.score_board.children)[0]
+            button = filter(
+                lambda x: str(x).find('Button') != -1,
+                    self.score_board.children)[0]
             button.disabled = not self.disabled
         except IndexError:
             button = None
@@ -495,10 +524,11 @@ class Kivy1010(GridLayout):
 
     def create_pause_but(self):
         if not self.get_pause_but():
-            button = Button(background_color=get_color_from_hex('E2DDD5'), size_hint=(None, 1), width=50,
-                            disabled=False)
+            button = Button(background_color=get_color_from_hex('E2DDD5'),
+                            size_hint=(None, 1), width=50, disabled=False)
             button.bind(on_press=self.create_on_start_popup)
-            button.image.source = 'assets/images/pause_%s.png' % (self.theme == 'dark' and 'dark' or 'sun')
+            button.image.source = 'assets/images/pause_%s.png' % (
+                self.theme == 'dark' and 'dark' or 'sun')
             self.score_board.add_widget(button)
 
     def pause_change_disability(self):
@@ -551,35 +581,44 @@ class Kivy1010(GridLayout):
         global SOUND
         button = args[0]
         SOUND = not SOUND
-        button.image.source = 'assets/images/sound_%s.png' % (SOUND and 'on' or 'off')
+        button.image.source = 'assets/images/sound_%s.png' % (
+            SOUND and 'on' or 'off')
         DB.store_put('sound', SOUND)
         DB.store_sync()
         if not SOUND:
             self.sound.stop()
-    
+
     def open_page(self, *args):
             webbrowser.open(args[1])
-            
+
     def check_update(self, *args):
-        resp = urlopen("https://github.com/RedXBeard/kivy-1010/releases/latest")
+        release_link = "https://github.com/RedXBeard/kivy-1010/releases/latest"
+        resp = urlopen(release_link)
         current_version = int("".join(resp.url.split("/")[-1].split(".")))
-        lbl = Label(text="Already in Newest Version", shorten=True, strip=True, font_size=14, color=(0,0,0,1))
+        lbl = Label(
+            text="Already in Newest Version", shorten=True,
+            strip=True, font_size=14, color=(0,0,0,1))
         if current_version > int("".join(__version__.split('.'))):
-            lbl.text="Newer Version Released please check \n[color=3148F5][i][ref=https://github.com/RedXBeard/kivy-1010]Kivy1010[/ref][/i][/color]"
+            lbl.text = "Newer Version Released please check\n[color=3148F5][i]"
+            lbl.text += "[ref=https://github.com/RedXBeard/kivy-1010]Kivy1010"
+            lbl.text += "[/ref][/i][/color]"
             lbl.bind(on_ref_press=self.open_page)
         if self.popup:
             self.popup.dismiss()
-        
-        button = Button(background_color=get_color_from_hex('58CB85'), id="updater")
+
+        button = Button(
+            background_color=get_color_from_hex('58CB85'), id="updater")
         button.bind(on_press=self.create_on_start_popup)
-        layout = GridLayout(cols=1, rows=2, spacing=(10, 10), padding=(3, 6, 3, 6))
+        layout = GridLayout(
+            cols=1, rows=2, spacing=(10, 10), padding=(3, 6, 3, 6))
         layout.add_widget(lbl)
         layout.add_widget(button)
-        self.popup = Popup(content=layout, size_hint=(None, None), size=(300, 200), title='Kivy 1010',
-                           title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
-                           separator_color=get_color_from_hex('7B8ED4'))
+        self.popup = Popup(
+            content=layout, size_hint=(None, None), size=(300, 200),
+            title='Kivy 1010', title_color=(0, 0, 0, 1), auto_dismiss=False,
+            border=(0, 0, 0, 0), separator_color=get_color_from_hex('7B8ED4'))
         self.popup.open()
-        
+
     def create_on_start_popup(self, *args):
         if self.popup:
             self.popup.dismiss()
@@ -588,14 +627,20 @@ class Kivy1010(GridLayout):
         boxlayout = BoxLayout(orientation='vertical')
         set_color(boxlayout, get_color_from_hex('E2DDD5'))
         img = Image(source='assets/images/medal.png')
-        label = Label(text=str(self.get_record()), color=get_color_from_hex('5BBEE5'), font_size=30)
+        label = Label(
+            text=str(self.get_record()),
+            color=get_color_from_hex('5BBEE5'),
+            font_size=30)
         boxlayout.add_widget(img)
         boxlayout.add_widget(label)
         theme = Button(text_width=(self.width, None), halign='left')
-        theme.image.source = self.theme == 'dark' and 'assets/images/sun.png' or 'assets/images/moon.png'
+        image_source = 'assets/images/moon.png'
+        if self.theme == "dark":
+            image_source = 'assets/images/sun.png'
+        theme.image.source = image_source
+        layout = GridLayout(
+            cols=1, rows=4, spacing=(10, 10), padding=(3, 6, 3, 6))
 
-        layout = GridLayout(cols=1, rows=4, spacing=(10, 10), padding=(3, 6, 3, 6))
-        
         state = 'pre_play'
         if args and args[0].id != 'updater':
             restart = Button(background_color=get_color_from_hex('EC9449'))
@@ -617,31 +662,38 @@ class Kivy1010(GridLayout):
         layout.add_widget(boxlayout)
         sound_theme_box = GridLayout(cols=2, rows=1, spacing=(2, 0))
         sound = Button(background_color=get_color_from_hex('EC9449'))
-        sound.image.source = 'assets/images/sound_%s.png' % (SOUND and 'on' or 'off')
+        sound.image.source = 'assets/images/sound_%s.png' % (
+            SOUND and 'on' or 'off'
+        )
         sound.bind(on_press=self.change_sound)
         sound_theme_box.add_widget(theme)
         sound_theme_box.add_widget(sound)
         layout.add_widget(sound_theme_box)
-        
+
         if state != 'paused':
-            update_button = Button(background_color=get_color_from_hex('EC9449'), 
-                                          text="Check for Update", size_hint=(1., None), height=35, 
-                                          color=get_color_from_hex('F0F0F0'))
+            update_button = Button(
+                background_color=get_color_from_hex('EC9449'),
+                text="Check for Update", size_hint=(1., None), height=35,
+                color=get_color_from_hex('F0F0F0'))
             update_button.bind(on_press=self.check_update)
             update_button.image.source = "assets/images/trans.png"
             layout.add_widget(update_button)
-            
-        self.popup = Popup(content=layout, size_hint=(None, None), size=(200, 350), title='Kivy 1010',
-                           title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
-                           separator_color=get_color_from_hex('7B8ED4'))
+
+        self.popup = Popup(
+            content=layout, size_hint=(None, None), size=(200, 350),
+            title='Kivy 1010', title_color=(0, 0, 0, 1), auto_dismiss=False,
+            border=(0, 0, 0, 0), separator_color=get_color_from_hex('7B8ED4'))
         self.popup.open()
 
     def create_on_end_popup(self):
         global SOUND
         self.remove_pause_but()
-        label1 = Label(text='No Moves Left', color=get_color_from_hex('5BBEE5'))
+        label1 = Label(
+            text='No Moves Left', color=get_color_from_hex('5BBEE5'))
         img = Image(source='assets/images/medal.png')
-        label2 = Label(text=str(self.score), font_size=30, color=get_color_from_hex('5BBEE5'))
+        label2 = Label(
+            text=str(self.score), font_size=30,
+            color=get_color_from_hex('5BBEE5'))
         button = Button(background_color=get_color_from_hex('58CB85'))
         button.bind(on_press=self.go)
 
@@ -652,23 +704,29 @@ class Kivy1010(GridLayout):
 
         theme = Button(text_width=(self.width, None), halign='left')
         theme.bind(on_press=self.change_theme)
-        theme.image.source = self.theme == 'dark' and 'assets/images/sun.png' or 'assets/images/moon.png'
+        image_source = 'assets/images/moon.png'
+        if self.theme == "dark":
+            image_source = 'assets/images/sun.png'
+        theme.image.source = image_source
 
         sound_theme_box = GridLayout(cols=2, rows=1, spacing=(2, 0))
         sound = Button(background_color=get_color_from_hex('EC9449'))
-        sound.image.source = 'assets/images/sound_%s.png' % (SOUND and 'on' or 'off')
+        sound.image.source = 'assets/images/sound_%s.png' % (
+            SOUND and 'on' or 'off')
         sound.bind(on_press=self.change_sound)
         sound_theme_box.add_widget(theme)
         sound_theme_box.add_widget(sound)
 
-        layout = GridLayout(cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
+        layout = GridLayout(
+            cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
         layout.add_widget(boxlayout)
         layout.add_widget(button)
         layout.add_widget(sound_theme_box)
-        
-        self.popup = Popup(content=layout, size_hint=(None, None), size=(200, 350), title='Kivy 1010',
-                           title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
-                           separator_color=get_color_from_hex('7B8ED4'))
+
+        self.popup = Popup(
+            content=layout, size_hint=(None, None), size=(200, 350),
+            title='Kivy 1010', title_color=(0, 0, 0, 1), auto_dismiss=False,
+            border=(0, 0, 0, 0), separator_color=get_color_from_hex('7B8ED4'))
         self.popup.open()
         self.sync_score(0)
         self.sync_board({})
@@ -695,7 +753,9 @@ class Kivy1010(GridLayout):
         pre_board = self.get_synced_board()
         wh =  min((330 * Window.width / 520), (330 * Window.height / 600))
         for i in range(0, 100):
-            label = Label(color=(0, 0, 0, 1), size_hint=(None, None), size=(wh/11, wh/11))
+            label = Label(
+                color=(0, 0, 0, 1), size_hint=(None, None),
+                size=(wh/11, wh/11))
             color = pre_board.get(str(99-i), self.labels)
             set_color(label, color)
             if color != self.labels:
@@ -709,7 +769,7 @@ class Kivy1010(GridLayout):
             if s_set and s_set[0].children:
                 result.append(s_set[0].children[0])
         return result
-        
+
     def coming_shapes(self):
         shapes = self.get_synced_shapes()
         scatters = [self.comingLeft, self.comingMid, self.comingRight]
@@ -726,22 +786,29 @@ class Kivy1010(GridLayout):
             shape = None
             try:
                 pre_shape = shapes[scatters.index(scatter)]
-                shape = Shape(pre_shape['rows'], pre_shape['cols'], 
-                                          pre_shape['array'], pre_shape['color'])
+                shape = Shape(pre_shape['rows'], pre_shape['cols'],
+                              pre_shape['array'], pre_shape['color'])
             except IndexError:
                 pass
             if not shape:
-                color_set = filter(lambda x: x not in map(lambda x: x.color, self.get_shapes()), COLOR)
+                color_set = filter(
+                    lambda x: x not in map(
+                        lambda x: x.color, self.get_shapes()), COLOR)
                 shape = Shape(color_set=color_set)
             width = 0
             height = 0
             index = 0
             for i in shape.array:
                 if i == 1:
-                    box = Label(size_hint=(None, None), size=(scatter.wh_per, scatter.wh_per))
+                    box = Label(
+                        size_hint=(None, None),
+                        size=(scatter.wh_per, scatter.wh_per))
                     set_color(box, self.background)
                 else:
-                    box = Image(source='assets/images/trans.png', size_hint=(None, None), size=(scatter.wh_per, scatter.wh_per))
+                    box = Image(
+                        source='assets/images/trans.png',
+                        size_hint=(None, None),
+                        size=(scatter.wh_per, scatter.wh_per))
                 index += 1
                 if index % shape.cols == 0:
                     height += scatter.wh_per + 1
@@ -754,7 +821,9 @@ class Kivy1010(GridLayout):
             scatter.size = (width, height)
 
             index = scatters.index(scatter)
-            scatter_pos_x = (per_shape_width * index) + ((per_shape_width - scatter.size[0])/2)
+            scatter_pos_x = (
+                per_shape_width * index) + (
+                    (per_shape_width - scatter.size[0]) / 2)
             scatter_pos_y = (per_shape_height - scatter.size[1]) / 2
             scatter.pos = (scatter_pos_x, scatter_pos_y)
             scatter.pre_pos = scatter.pos
@@ -774,14 +843,14 @@ class Kivy1010(GridLayout):
 
     def resize_all(self, width, height):
         try:
-            self.score_board.visual_score_label.size = (width / 2 - 40,
-                                                                                      self.score_board.visual_score_label.size[1])
+            self.score_board.visual_score_label.size = (
+                width / 2 - 40, self.score_board.visual_score_label.size[1])
             self.score_board.width = width - 40
         except:
             pass
 
         try:
-            wh =  min((330.0 * width / 520), (330.0 * height / 600))
+            wh = min((330.0 * width / 520), (330.0 * height / 600))
             padding = (width > wh)  and (width - wh) / 2 - 20 or 0
             self.board.width = self.board.height = wh + 10
             for label in self.board.children:
@@ -792,7 +861,8 @@ class Kivy1010(GridLayout):
 
         try:
             scatters = [self.comingLeft, self.comingMid, self.comingRight]
-            self.coming.height = float(height) - float(self.board.height) - 50.0
+            self.coming.height = (
+                float(height) - float(self.board.height) - 50.0)
             per_shape_width = float(width) / 3
             per_shape_height = float(self.coming.height)
             for scatter in scatters:
@@ -805,18 +875,21 @@ class Kivy1010(GridLayout):
                     index = 0
                     for label in shape.children:
                         label.size = (scatter.wh_per, scatter.wh_per)
-    
+
                         if index % shape.cols == 0:
                             shape_height += scatter.wh_per + 1
-        
+
                         if index % shape.rows == 0:
                             shape_width += scatter.wh_per + 1
                         index += 1
                     index = scatters.index(scatter)
                     scatter.size_hint = (None, None)
                     scatter.size = (shape_width, shape_height)
-                    scatter_pos_x = (per_shape_width * index) + ((per_shape_width - scatter.size[0])/2)
-                    scatter_pos_y = max(0, (per_shape_height - scatter.size[1]) / 2)
+                    scatter_pos_x = (
+                        (per_shape_width * index) + (
+                            (per_shape_width - scatter.size[0]) / 2))
+                    scatter_pos_y = max(
+                        0, (per_shape_height - scatter.size[1]) / 2)
                     scatter.pos = (scatter_pos_x, scatter_pos_y)
                     scatter.pre_pos = scatter.pos
         except:
@@ -824,6 +897,8 @@ class Kivy1010(GridLayout):
 
 
 class KivyMinesApp(App):
+    """Application main class"""
+
     def __init__(self, **kwargs):
         super(KivyMinesApp, self).__init__(**kwargs)
         Builder.load_file('assets/1010.kv')
@@ -831,65 +906,67 @@ class KivyMinesApp(App):
         self.icon = 'assets/images/cube.png'
 
     def build(self):
-        def restore(window):
-            window.size = WIN_SIZE
-                    
-        def resize(*args, **kwargs):
-            window, width, height = args
-            if width < 520 or height < 600:
-                restore(window)
-            else:
-                try:
-                    root = filter(lambda x: str(x).find('Kivy1010') != -1, window.children)[0]
-                    root.resize_all(float(root.width), float(root.height))
-                except IndexError:
-                    pass
-
-        def save_board(*args, **kwargs):
-            window, = args
-            root = window.children[0]
-            try:
-                board = root.board.children
-                board_default_color = root.labels
-                board_visual = {}
-                if board:
-                    index = 0
-                    for label in board:
-                        color = get_color(label)
-                        if label.filled:
-                            board_visual.update({index: color.rgba})
-                        index += 1
-                DB.store_put('board', board_visual)
-                DB.store_put('score', root.score)
-                DB.store_sync()
-            except AttributeError:
-                pass
-            
-            try:
-                scatters = [root.comingLeft, root.comingMid, root.comingRight]
-                shapes = []
-                for scatter in scatters:
-                    layout = scatter.children[0]
-                    try:
-                        shape = layout.children[0]
-                        pre_shape = dict(rows=shape.rows,
-                                                      cols=shape.cols,
-                                                      array=shape.array,
-                                                      color=shape.color)
-                        shapes.append(pre_shape)
-                    except IndexError:
-                        pass
-                DB.store_put('shapes', shapes)
-                DB.store_sync()
-            except AttributeError:
-                pass 
-
         mines = Kivy1010()
-        Window.bind(on_resize=resize)
-        Window.bind(on_close=save_board)
+        Window.bind(on_resize=self.resize)
+        Window.bind(on_close=self.save_board)
         return mines
 
+    def restore(self, window):
+        """Default window size handler."""
+        window.size = WIN_SIZE
 
+    def resize(self, *args):
+        """Handle sizes of all widget on resizing of window."""
+        window, width, height = args
+        if width < 520 or height < 600:
+            self.restore(window)
+        else:
+            try:
+                root = filter(
+                    lambda x:
+                        str(x).find('Kivy1010') != -1, window.children)[0]
+                root.resize_all(float(root.width), float(root.height))
+            except IndexError:
+                pass
+
+    def save_board(self, *args):
+        """On exit keep last session"""
+        window, = args
+        root = window.children[0]
+        try:
+            board = root.board.children
+            board_visual = {}
+            if board:
+                index = 0
+                for label in board:
+                    color = get_color(label)
+                    if label.filled:
+                        board_visual.update({index: color.rgba})
+                    index += 1
+            DB.store_put('board', board_visual)
+            DB.store_put('score', root.score)
+            DB.store_sync()
+        except AttributeError:
+            pass
+
+        try:
+            scatters = [root.comingLeft, root.comingMid, root.comingRight]
+            shapes = []
+            for scatter in scatters:
+                layout = scatter.children[0]
+                try:
+                    shape = layout.children[0]
+                    pre_shape = dict(rows=shape.rows,
+                                     cols=shape.cols,
+                                     array=shape.array,
+                                     color=shape.color)
+                    shapes.append(pre_shape)
+                except IndexError:
+                    pass
+            DB.store_put('shapes', shapes)
+            DB.store_sync()
+        except AttributeError:
+            pass
 
 if __name__ == '__main__':
     Window.size = WIN_SIZE
