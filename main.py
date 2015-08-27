@@ -1,4 +1,4 @@
-__version__ = '1.4.0'
+__version__ = '1.5.0'
 
 import webbrowser
 from urllib2 import urlopen
@@ -173,14 +173,14 @@ class CustomScatter(ScatterLayout):
     def on_transform_with_touch(self, touch):
         """take action when shape touched."""
         super(CustomScatter, self).on_transform_with_touch(touch)
-        # last_moved = datetime.now()
         root = self.parent.parent
+        root.last_moved = datetime.now()
         root.clear_free_place()
         try:
             if self.do_translation_x and self.do_translation_y:
                 shape = self.children[0].children[0]
                 for label in shape.children:
-                    label.size = (self.wh_per+3, self.wh_per+3)
+                    label.size = (self.wh_per + 3, self.wh_per + 3)
                 shape.spacing = (5, 5)
         except IndexError:
             pass
@@ -208,7 +208,7 @@ class CustomScatter(ScatterLayout):
 
     def calculate_shape_size(self):
         wh = min((330 * Window.width / 520), (330 * Window.height / 600))
-        self.wh_per = (wh/11) - 5
+        self.wh_per = (wh / 11) - 5
 
     def position_calculation(self):
         """
@@ -370,7 +370,7 @@ class CustomScatter(ScatterLayout):
 class Sound(object):
     def __init__(self):
         for sound_name, sound_info in SOUNDS.items():
-            sound_name = 'sound_'+sound_name
+            sound_name = 'sound_' + sound_name
             setattr(self, sound_name, None)
             sound = getattr(self, sound_name)
             sound = SoundLoader.load(sound_info['path'])
@@ -388,7 +388,7 @@ class Sound(object):
     def play(self, sound_key):
         """Play sound"""
         global SOUND
-        sound_key = 'sound_'+sound_key
+        sound_key = 'sound_' + sound_key
         if SOUND:
             played_sounds = filter(
                 lambda x: x[1].state == 'play', self.get_sounds().items())
@@ -416,6 +416,8 @@ class Kivy1010(GridLayout):
     background = ''
     labels = ''
     popup = None
+    info_popup = None
+    last_move = None
 
     def __init__(self):
         global SOUND
@@ -426,9 +428,10 @@ class Kivy1010(GridLayout):
         self.high_score = self.get_record()
         self.popup = None
         self.create_on_start_popup()
+        Clock.schedule_once(lambda x: self.check_update(), 5)
         Clock.schedule_once(lambda dt: self.update_score(), .03)
         # Not Yet complete. will be available on 1.5.0 version
-        # self.movement_detect()
+        self.movement_detect()
 
     def set_score(self):
         self.score = DB.store_get('score')
@@ -456,19 +459,37 @@ class Kivy1010(GridLayout):
             Animation.cancel_all(color, 'rgba')
             set_color(position, self.labels)
 
-    def lightup(self):
+    # def lightdown(self, *args):
+    #     labels = []
+    #     for index in self.free_place:
+    #         labels.append(get_color(self.board.children[index]))
+    #     for color in labels:
+    #         anim = Animation(
+    #             rgba=self.free_place_notifier, d=.5, t='linear')
+    #         anim.bind(on_complete=self.lightup)
+    #         anim.start(color)
+    #
+    #     theme = filter(lambda x: x != self.theme, THEME.keys())[0]
+    #     if self.free_place_notifier == THEME[theme]['labels']:
+    #         self.free_place_notifier = THEME[self.theme]['labels']
+    #     else:
+    #         self.free_place_notifier = THEME[theme]['labels']
+
+    def lightup(self, *args):
         labels = []
         for index in self.free_place:
             labels.append(get_color(self.board.children[index]))
         for color in labels:
             anim = Animation(
-                rgba=self.free_place_notifier, d=5, t='out_elastic')
+                rgba=self.free_place_notifier, d=.5, t='linear')
+            # anim.bind(on_complete=self.lightdown)
             anim.start(color)
 
-        if self.free_place_notifier == self.background:
-            self.free_place_notifier = self.labels
+        theme = filter(lambda x: x != self.theme, THEME.keys())[0]
+        if self.free_place_notifier == THEME[theme]['labels']:
+            self.free_place_notifier = THEME[self.theme]['labels']
         else:
-            self.free_place_notifier = self.background
+            self.free_place_notifier = THEME[theme]['labels']
 
     def update_score(self):
         if self.score > self.visual_score:
@@ -476,14 +497,10 @@ class Kivy1010(GridLayout):
         Clock.schedule_once(lambda dt: self.update_score(), .03)
 
     def movement_detect(self):
-        if self.free_place:
-            detection = filter(
-                lambda x:
-                    datetime.now() - x.last_moved > timedelta(seconds=5),
-                        (self.comingLeft, self.comingMid, self.comingRight))
-            if detection:
-                self.lightup()
-        Clock.schedule_once(lambda dt: self.movement_detect(), 5)
+        if self.free_place and (
+                datetime.now() - self.last_moved > timedelta(seconds=5)):
+            self.lightup()
+        Clock.schedule_once(lambda dt: self.movement_detect(), 1)
 
     def change_just_theme(self, *args):
         theme = filter(lambda x: x != self.theme, THEME.keys())[0]
@@ -501,7 +518,7 @@ class Kivy1010(GridLayout):
         self.theme = theme
         self.background = THEME.get(theme).get('background')
         self.labels = THEME.get(theme).get('labels')
-        self.free_place_notifier = self.background
+        self.free_place_notifier = THEME[self.theme]['labels']
         self.change_board_color(self.labels)
         Window.clearcolor = self.background
         DB.store_put('theme', theme)
@@ -516,7 +533,7 @@ class Kivy1010(GridLayout):
         try:
             button = filter(
                 lambda x: str(x).find('Button') != -1,
-                    self.score_board.children)[0]
+                self.score_board.children)[0]
             button.disabled = not self.disabled
         except IndexError:
             button = None
@@ -589,7 +606,7 @@ class Kivy1010(GridLayout):
             self.sound.stop()
 
     def open_page(self, *args):
-            webbrowser.open(args[1])
+        webbrowser.open(args[1])
 
     def check_update(self, *args):
         release_link = "https://github.com/RedXBeard/kivy-1010/releases/latest"
@@ -597,27 +614,23 @@ class Kivy1010(GridLayout):
         current_version = int("".join(resp.url.split("/")[-1].split(".")))
         lbl = Label(
             text="Already in Newest Version", shorten=True,
-            strip=True, font_size=14, color=(0,0,0,1))
+            strip=True, font_size=14, color=(0, 0, 0, 1))
         if current_version > int("".join(__version__.split('.'))):
             lbl.text = "Newer Version Released please check\n[color=3148F5][i]"
             lbl.text += "[ref=https://github.com/RedXBeard/kivy-1010]Kivy1010"
             lbl.text += "[/ref][/i][/color]"
             lbl.bind(on_ref_press=self.open_page)
-        if self.popup:
-            self.popup.dismiss()
 
-        button = Button(
-            background_color=get_color_from_hex('58CB85'), id="updater")
-        button.bind(on_press=self.create_on_start_popup)
-        layout = GridLayout(
-            cols=1, rows=2, spacing=(10, 10), padding=(3, 6, 3, 6))
-        layout.add_widget(lbl)
-        layout.add_widget(button)
-        self.popup = Popup(
-            content=layout, size_hint=(None, None), size=(300, 200),
-            title='Kivy 1010', title_color=(0, 0, 0, 1), auto_dismiss=False,
-            border=(0, 0, 0, 0), separator_color=get_color_from_hex('7B8ED4'))
-        self.popup.open()
+            layout = GridLayout(
+                cols=1, rows=1, spacing=(10, 10), padding=(3, 6, 3, 6))
+            layout.add_widget(lbl)
+
+            self.info_popup = Popup(
+                content=layout, size_hint=(None, None), size=(300, 200),
+                title='Kivy 1010', title_color=(0, 0, 0, 1),
+                border=(0, 0, 0, 0), auto_dismiss=True,
+                separator_color=get_color_from_hex('7B8ED4'))
+            self.info_popup.open()
 
     def create_on_start_popup(self, *args):
         if self.popup:
@@ -751,12 +764,12 @@ class Kivy1010(GridLayout):
     def refresh_board(self):
         self.board.clear_widgets()
         pre_board = self.get_synced_board()
-        wh =  min((330 * Window.width / 520), (330 * Window.height / 600))
+        wh = min((330 * Window.width / 520), (330 * Window.height / 600))
         for i in range(0, 100):
             label = Label(
                 color=(0, 0, 0, 1), size_hint=(None, None),
-                size=(wh/11, wh/11))
-            color = pre_board.get(str(99-i), self.labels)
+                size=(wh / 11, wh / 11))
+            color = pre_board.get(str(99 - i), self.labels)
             set_color(label, color)
             if color != self.labels:
                 label.filled = True
@@ -827,7 +840,7 @@ class Kivy1010(GridLayout):
             scatter_pos_y = (per_shape_height - scatter.size[1]) / 2
             scatter.pos = (scatter_pos_x, scatter_pos_y)
             scatter.pre_pos = scatter.pos
-            scatter.last_moved = datetime.now()
+            self.last_moved = datetime.now()
 
             scatter.add_widget(shape)
             label_colors = shape.get_colors()
@@ -851,7 +864,7 @@ class Kivy1010(GridLayout):
 
         try:
             wh = min((330.0 * width / 520), (330.0 * height / 600))
-            padding = (width > wh)  and (width - wh) / 2 - 20 or 0
+            padding = (width > wh) and (width - wh) / 2 - 20 or 0
             self.board.width = self.board.height = wh + 10
             for label in self.board.children:
                 label.width = label.height = wh / 11
