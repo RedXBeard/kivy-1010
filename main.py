@@ -1,7 +1,7 @@
 __version__ = '1.5.0'
 
 import webbrowser
-from urllib2 import urlopen
+from urllib2 import urlopen, URLError
 from random import randint
 from datetime import datetime, timedelta
 
@@ -623,27 +623,30 @@ class Kivy1010(GridLayout):
 
     def check_update(self, *args):
         release_link = "https://github.com/RedXBeard/kivy-1010/releases/latest"
-        resp = urlopen(release_link)
-        current_version = int("".join(resp.url.split("/")[-1].split(".")))
-        lbl = Label(
-            text="Already in Newest Version", shorten=True,
-            strip=True, font_size=14, color=(0, 0, 0, 1))
-        if current_version > int("".join(__version__.split('.'))):
-            lbl.text = "Newer Version Released please check\n[color=3148F5][i]"
-            lbl.text += "[ref=https://github.com/RedXBeard/kivy-1010]Kivy1010"
-            lbl.text += "[/ref][/i][/color]"
-            lbl.bind(on_ref_press=self.open_page)
+        try:
+            resp = urlopen(release_link)
+            current_version = int("".join(resp.url.split("/")[-1].split(".")))
+            lbl = Label(
+                text="Already in Newest Version", shorten=True,
+                strip=True, font_size=14, color=(0, 0, 0, 1))
+            if current_version > int("".join(__version__.split('.'))):
+                lbl.text = "Newer Version Released please check\n[color=3148F5][i]"
+                lbl.text += "[ref=https://github.com/RedXBeard/kivy-1010]Kivy1010"
+                lbl.text += "[/ref][/i][/color]"
+                lbl.bind(on_ref_press=self.open_page)
 
-            layout = GridLayout(
-                cols=1, rows=1, spacing=(10, 10), padding=(3, 6, 3, 6))
-            layout.add_widget(lbl)
+                layout = GridLayout(
+                    cols=1, rows=1, spacing=(10, 10), padding=(3, 6, 3, 6))
+                layout.add_widget(lbl)
 
-            self.info_popup = Popup(
-                content=layout, size_hint=(None, None), size=(300, 200),
-                title='Kivy 1010', title_color=(0, 0, 0, 1),
-                border=(0, 0, 0, 0), auto_dismiss=True,
-                separator_color=get_color_from_hex('7B8ED4'))
-            self.info_popup.open()
+                self.info_popup = Popup(
+                    content=layout, size_hint=(None, None), size=(300, 200),
+                    title='Kivy 1010', title_color=(0, 0, 0, 1),
+                    border=(0, 0, 0, 0), auto_dismiss=True,
+                    separator_color=get_color_from_hex('7B8ED4'))
+                self.info_popup.open()
+        except URLError:
+            pass
 
     def create_on_start_popup(self, *args):
         if self.popup:
