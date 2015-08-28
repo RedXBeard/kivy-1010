@@ -124,6 +124,7 @@ def free_positions(board, shape):
     pos_on_board = board.children
     place = False
     shape_box_on_board = []
+    all_positions = []
     for pos in pos_on_board:
         label_index = board.children.index(pos)
         shape_objs = shape.children
@@ -133,11 +134,11 @@ def free_positions(board, shape):
                 board, shape_box_on_board, shape_objs, return_position=True)
             if occupied:
                 raise IndexError
-            place = True
-            break
+            place = True or place
+            all_positions.append(positions)
         except:
             pass
-    return place, positions
+    return place, all_positions
 
 
 class Shape(GridLayout):
@@ -306,7 +307,7 @@ class CustomScatter(ScatterLayout):
         for shape in active_shapes:
             result, place = free_positions(board, shape)
             if result:
-                free_place.append(place)
+                free_place.extend(place)
             possible_places = possible_places or result
 
         board.parent.score += plus_score
@@ -314,7 +315,8 @@ class CustomScatter(ScatterLayout):
             board.parent.free_place = []
             CustomScatter.change_movement(board.parent)
         else:
-            board.parent.free_place = free_place[0]
+            best_place = CustomScatter.find_best_place(board, free_place)
+            board.parent.free_place = best_place
 
     def clear_lines(self, lines, score_update=True):
         """
@@ -365,6 +367,32 @@ class CustomScatter(ScatterLayout):
         board.set_record()
         if not board.popup:
             board.create_on_end_popup()
+
+    @staticmethod
+    def find_best_place(board, possible_places):
+        """
+        Find best place from the list.
+
+        For now, only to reach to gain more points. More AI should be add.
+        """
+        result = []
+        for places in possible_places:
+            clear_clearity = get_lines(places)
+            points = len(places)
+            cleared_lines = 0
+            for line in clear_clearity:
+                filled = map(
+                    lambda x:
+                    True if x in places else board.children[x].filled,
+                    line)
+                if not filter(lambda x: not x, filled):
+                    cleared_lines += 1
+                points += len(filter(lambda x: x, filled))
+            points = points + (cleared_lines * 10) + ((cleared_lines - 1) * 5)
+            result.append([places, points])
+        return result and sorted(result,
+                                 key=lambda x: x[1],
+                                 reverse=True)[0][0] or []
 
 
 class Sound(object):
@@ -459,30 +487,14 @@ class Kivy1010(GridLayout):
             Animation.cancel_all(color, 'rgba')
             set_color(position, self.labels)
 
-    # def lightdown(self, *args):
-    #     labels = []
-    #     for index in self.free_place:
-    #         labels.append(get_color(self.board.children[index]))
-    #     for color in labels:
-    #         anim = Animation(
-    #             rgba=self.free_place_notifier, d=.5, t='linear')
-    #         anim.bind(on_complete=self.lightup)
-    #         anim.start(color)
-    #
-    #     theme = filter(lambda x: x != self.theme, THEME.keys())[0]
-    #     if self.free_place_notifier == THEME[theme]['labels']:
-    #         self.free_place_notifier = THEME[self.theme]['labels']
-    #     else:
-    #         self.free_place_notifier = THEME[theme]['labels']
-
     def lightup(self, *args):
+        """to light up free space"""
         labels = []
         for index in self.free_place:
             labels.append(get_color(self.board.children[index]))
         for color in labels:
             anim = Animation(
                 rgba=self.free_place_notifier, d=.5, t='linear')
-            # anim.bind(on_complete=self.lightdown)
             anim.start(color)
 
         theme = filter(lambda x: x != self.theme, THEME.keys())[0]
@@ -497,6 +509,7 @@ class Kivy1010(GridLayout):
         Clock.schedule_once(lambda dt: self.update_score(), .03)
 
     def movement_detect(self):
+        """Calculate last movement on board."""
         if self.free_place and (
                 datetime.now() - self.last_moved > timedelta(seconds=5)):
             self.lightup()
@@ -652,9 +665,8 @@ class Kivy1010(GridLayout):
             image_source = 'assets/images/sun.png'
         theme.image.source = image_source
         layout = GridLayout(
-            cols=1, rows=4, spacing=(10, 10), padding=(3, 6, 3, 6))
+            cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
 
-        state = 'pre_play'
         if args and args[0].id != 'updater':
             restart = Button(background_color=get_color_from_hex('EC9449'))
             restart.image.source = 'assets/images/refresh.png'
@@ -665,7 +677,6 @@ class Kivy1010(GridLayout):
             play_restart_box.add_widget(button)
             play_restart_box.add_widget(restart)
             layout.add_widget(play_restart_box)
-            state = "paused"
 
         else:
             layout.add_widget(button)
@@ -682,15 +693,6 @@ class Kivy1010(GridLayout):
         sound_theme_box.add_widget(theme)
         sound_theme_box.add_widget(sound)
         layout.add_widget(sound_theme_box)
-
-        if state != 'paused':
-            update_button = Button(
-                background_color=get_color_from_hex('EC9449'),
-                text="Check for Update", size_hint=(1., None), height=35,
-                color=get_color_from_hex('F0F0F0'))
-            update_button.bind(on_press=self.check_update)
-            update_button.image.source = "assets/images/trans.png"
-            layout.add_widget(update_button)
 
         self.popup = Popup(
             content=layout, size_hint=(None, None), size=(200, 350),
@@ -851,8 +853,6 @@ class Kivy1010(GridLayout):
                 anim.start(color)
         DB.store_put('shapes', [])
         DB.store_sync()
-        # movement  detect not yet complete
-        # self.clear_free_place()
 
     def resize_all(self, width, height):
         try:
