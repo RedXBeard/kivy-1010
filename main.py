@@ -340,17 +340,20 @@ class CustomScatter(ScatterLayout):
             if flag:
                 block_count += 1
                 all_labels.extend(labels)
-                all_colored_labels.extend(colored_labels)
+                all_colored_labels.append(colored_labels)
         if all_labels:
             self.parent.parent.sound.play('line_clear')
         for i in all_labels:
             i.filled = False
         anims = []
-        for i in all_colored_labels:
-            anim = Animation(rgba=board.parent.labels, d=.03, t='in_out_circ')
-            anims.append((anim, i))
+        for x in all_colored_labels:
+            tmp = []
+            for y in x:
+                anim = Animation(rgba=board.parent.labels, d=.03, t='in_out_circ')
+                tmp.append((anim, y))
+            # anims.append(tmp)
             # anim.start(i)
-        self.start_animation(anims)
+            self.start_animation(tmp)
         if score_update:
             plus_score = len(all_labels) + (
                 (block_count > 0 and (
@@ -468,7 +471,7 @@ class Kivy1010(GridLayout):
         self.popup = None
         self.create_on_start_popup()
         Clock.schedule_once(lambda x: self.check_update(), 5)
-        Clock.schedule_once(lambda dt: self.update_score(), .03)
+        Clock.schedule_once(lambda dt: self.update_score(), .04)
         # Not Yet complete. will be available on 1.5.0 version
         self.movement_detect()
 
