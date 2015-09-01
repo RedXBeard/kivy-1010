@@ -345,15 +345,26 @@ class CustomScatter(ScatterLayout):
             self.parent.parent.sound.play('line_clear')
         for i in all_labels:
             i.filled = False
+        anims = []
         for i in all_colored_labels:
-            anim = Animation(rgba=board.parent.labels, d=.9, t='in_out_back')
-            anim.start(i)
+            anim = Animation(rgba=board.parent.labels, d=.03, t='in_out_circ')
+            anims.append((anim, i))
+            # anim.start(i)
+        self.start_animation(anims)
         if score_update:
             plus_score = len(all_labels) + (
                 (block_count > 0 and (
                     5 * (block_count - 1)
                 ) or 0) * block_count)
             board.parent.score += plus_score
+
+    def start_animation(self, anims, index=0):
+        if anims:
+            animation, obj = anims[index]
+            if len(anims) > index + 1:
+                animation.bind(
+                    on_complete=lambda x,y: self.start_animation(anims, index + 1))
+            animation.start(obj)
 
     @staticmethod
     def change_movement(board):
