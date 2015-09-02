@@ -2,7 +2,7 @@ __version__ = '1.5.0'
 
 import webbrowser
 from urllib2 import urlopen, URLError
-from random import randint
+from random import choice
 from datetime import datetime, timedelta
 
 from kivy.app import App
@@ -149,9 +149,10 @@ class Shape(GridLayout):
             self, rows=None, cols=None, array=None,
             color=None, color_set=COLOR):
         super(Shape, self).__init__()
-        shape_key = SHAPES.keys()[randint(0, len(SHAPES.keys()) - 1)]
-        shape = SHAPES[shape_key][randint(0, len(SHAPES[shape_key]) - 1)]
-        ccolor = color_set[randint(0, len(color_set) - 1)]
+        shape_key = choice(SHAPES.keys())
+        shape = choice(SHAPES[shape_key])
+        shape = SHAPES[shape_key][0]
+        ccolor = choice(color_set)
         self.rows = rows and rows or shape['rows']
         self.cols = cols and cols or shape['cols']
         self.array = array and array or shape['array']
@@ -281,7 +282,7 @@ class CustomScatter(ScatterLayout):
                 board.parent.sound.play('placed')
                 parent.clear_widgets()
                 root_class = parent.parent.parent.parent
-                self.clear_lines(get_lines(board_labels))
+                self.clear_lines(get_lines(board_labels), shape_labels=board_labels)
                 if not filter(
                     lambda x: x,
                         map(lambda x: x.children[0].children,
@@ -318,7 +319,7 @@ class CustomScatter(ScatterLayout):
             best_place = CustomScatter.find_best_place(board, free_place)
             board.parent.free_place = best_place
 
-    def clear_lines(self, lines, score_update=True):
+    def clear_lines(self, lines, score_update=True, shape_labels=[]):
         """
         clear lines on rows and cols, first collect indexes then get points
         """
@@ -340,19 +341,26 @@ class CustomScatter(ScatterLayout):
             if flag:
                 block_count += 1
                 all_labels.extend(labels)
-                all_colored_labels.append(colored_labels)
+                possible_split_area = set(labels).intersection(set(
+                    map(lambda x: board.children[x], shape_labels)))
+                split_position = 5
+                if possible_split_area:
+                    split_label = list(possible_split_area)[0]
+                    split_position = labels.index(split_label)
+
+                first = colored_labels[:split_position]
+                rest = colored_labels[split_position:]
+                first.reverse()
+                all_colored_labels.extend([first, rest])
         if all_labels:
             self.parent.parent.sound.play('line_clear')
         for i in all_labels:
             i.filled = False
-        anims = []
         for x in all_colored_labels:
             tmp = []
             for y in x:
-                anim = Animation(rgba=board.parent.labels, d=.03, t='in_out_circ')
+                anim = Animation(rgba=board.parent.labels, d=.04, t='out_back')
                 tmp.append((anim, y))
-            # anims.append(tmp)
-            # anim.start(i)
             self.start_animation(tmp)
         if score_update:
             plus_score = len(all_labels) + (
@@ -366,7 +374,8 @@ class CustomScatter(ScatterLayout):
             animation, obj = anims[index]
             if len(anims) > index + 1:
                 animation.bind(
-                    on_complete=lambda x,y: self.start_animation(anims, index + 1))
+                    on_complete=(
+                        lambda x, y: self.start_animation(anims, index + 1)))
             animation.start(obj)
 
     @staticmethod
@@ -520,7 +529,7 @@ class Kivy1010(GridLayout):
     def update_score(self):
         if self.score > self.visual_score:
             self.visual_score += 1
-        Clock.schedule_once(lambda dt: self.update_score(), .03)
+        Clock.schedule_once(lambda dt: self.update_score(), .02)
 
     def movement_detect(self):
         """Calculate last movement on board."""
