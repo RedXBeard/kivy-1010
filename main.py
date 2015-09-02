@@ -358,10 +358,13 @@ class CustomScatter(ScatterLayout):
             i.filled = False
         for x in all_colored_labels:
             tmp = []
+            box = 1
             for y in x:
-                anim = Animation(rgba=board.parent.labels, d=.04, t='out_back')
-                tmp.append((anim, y))
-            self.start_animation(tmp)
+                anim = Animation(rgba=board.parent.labels, d=float(box) / 5, t='out_back')
+                anim.start(y)
+                box += 1
+                # tmp.append((anim, y))
+            # self.start_animation(tmp)
         if score_update:
             plus_score = len(all_labels) + (
                 (block_count > 0 and (
