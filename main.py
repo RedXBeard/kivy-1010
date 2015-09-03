@@ -357,29 +357,18 @@ class CustomScatter(ScatterLayout):
         for i in all_labels:
             i.filled = False
         for x in all_colored_labels:
-            tmp = []
             box = 1
             for y in x:
-                anim = Animation(rgba=board.parent.labels, d=float(box) / 5, t='out_back')
+                anim = Animation(rgba=board.parent.labels,
+                                 d=float(box) / 15, t='in_circ')
                 anim.start(y)
                 box += 1
-                # tmp.append((anim, y))
-            # self.start_animation(tmp)
         if score_update:
             plus_score = len(all_labels) + (
                 (block_count > 0 and (
                     5 * (block_count - 1)
                 ) or 0) * block_count)
             board.parent.score += plus_score
-
-    def start_animation(self, anims, index=0):
-        if anims:
-            animation, obj = anims[index]
-            if len(anims) > index + 1:
-                animation.bind(
-                    on_complete=(
-                        lambda x, y: self.start_animation(anims, index + 1)))
-            animation.start(obj)
 
     @staticmethod
     def change_movement(board):
@@ -948,10 +937,11 @@ class KivyMinesApp(App):
         self.icon = 'assets/images/cube.png'
 
     def build(self):
-        mines = Kivy1010()
+        game = Kivy1010()
         Window.bind(on_resize=self.resize)
         Window.bind(on_close=self.save_board)
-        return mines
+        game.resize_all(float(Window.width), float(Window.height))
+        return game
 
     def restore(self, window):
         """Default window size handler."""
@@ -1011,8 +1001,6 @@ class KivyMinesApp(App):
             pass
 
 if __name__ == '__main__':
-    Window.size = WIN_SIZE
-    Window.borderless = False
     Config.set('kivy', 'desktop', 1)
     Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
     KivyMinesApp().run()
