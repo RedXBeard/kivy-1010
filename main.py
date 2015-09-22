@@ -1,5 +1,3 @@
-__version__ = '1.5.0'
-
 import webbrowser
 from urllib2 import urlopen, URLError
 from random import choice
@@ -22,6 +20,8 @@ from kivy.uix.button import Button
 from kivy.core.audio import SoundLoader
 from kivy.properties import NumericProperty
 from config import DB, THEME, COLOR, SHAPES, SOUNDS, WIN_SIZE
+
+__version__ = '1.5.0'
 
 # SCORE calculation
 """
@@ -282,7 +282,8 @@ class CustomScatter(ScatterLayout):
                 board.parent.sound.play('placed')
                 parent.clear_widgets()
                 root_class = parent.parent.parent.parent
-                self.clear_lines(get_lines(board_labels), shape_labels=board_labels)
+                self.clear_lines(get_lines(board_labels),
+                                 shape_labels=board_labels)
                 if not filter(
                     lambda x: x,
                         map(lambda x: x.children[0].children,
@@ -645,9 +646,10 @@ class Kivy1010(GridLayout):
                 text="Already in Newest Version", shorten=True,
                 strip=True, font_size=14, color=(0, 0, 0, 1))
             if current_version > int("".join(__version__.split('.'))):
-                lbl.text = "Newer Version Released please check\n[color=3148F5][i]"
-                lbl.text += "[ref=https://github.com/RedXBeard/kivy-1010]Kivy1010"
-                lbl.text += "[/ref][/i][/color]"
+                lbl.text = ("Newer Version Released please check\n"
+                            "[color=3148F5][i][ref=https://github"
+                            ".com/RedXBeard/kivy-1010]Kivy1010"
+                            "[/ref][/i][/color]")
                 lbl.bind(on_ref_press=self.open_page)
 
                 layout = GridLayout(
