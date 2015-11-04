@@ -32,25 +32,26 @@
         Color:
             rgba: get_color_from_hex('E2DDD5')
         Rectangle:
-            pos: self.pos[0], self.pos[1]+3
-            size: self.size[0], self.size[1]-6
+            pos: self.pos[0], self.pos[1]+self.curve/2
+            size: self.size[0], self.size[1]-self.curve
         Rectangle:
-            pos: self.pos[0]+3, self.pos[1]
-            size: self.size[0]-6, self.size[1]
+            pos: self.pos[0]+self.curve/2, self.pos[1]
+            size: self.size[0]-self.curve, self.size[1]
         Ellipse:
-            size: 6, 6
+            size: self.curve, self.curve
             pos: self.pos[0], self.pos[1]
         Ellipse:
-            size: 6, 6
-            pos: self.pos[0], self.pos[1]+self.height-6
+            size: self.curve, self.curve
+            pos: self.pos[0], self.pos[1]+self.height-self.curve
         Ellipse:
-            size: 6, 6
-            pos: self.pos[0]+self.width-6, self.pos[1]
+            size: self.curve, self.curve
+            pos: self.pos[0]+self.width-self.curve, self.pos[1]
         Ellipse:
-            size: 6, 6
-            pos: self.pos[0]+self.width-6, self.pos[1]+self.height-6
+            size: self.curve, self.curve
+            pos: self.pos[0]+self.width-self.curve, self.pos[1]+self.height-self.curve
     filled: False
     markup: True
+    curve: 9
 
 Image:
     filled: False
@@ -65,7 +66,7 @@ Image:
     comingLeft: comingLeft
     comingMid: comingMid
     comingRight: comingRight
-            
+
     GridLayout:
         canvas.before:
             Color:
