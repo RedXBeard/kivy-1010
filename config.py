@@ -1,8 +1,53 @@
+try:
+    from Crypto import Random
+    from Crypto.Cipher import AES
+    CRYPTO = True
+except ImportError:
+    CRYPTO = False
 import os
+import base64
+import hashlib
 from subprocess import Popen, PIPE
 
 from kivy.storage.jsonstore import JsonStore
 from kivy.utils import get_color_from_hex
+
+
+class Cipher1010(object):
+    def __init__(self, pharase):
+        self.block_size = 32
+        self.pharase = hashlib.sha256(pharase.encode()).digest()
+
+    def encrypt(self, raw):
+        if CRYPTO:
+            raw = self.fill(str(raw))
+            iv = Random.new().read(AES.block_size)
+            cipher = AES.new(self.pharase, AES.MODE_CBC, iv)
+            return base64.b64encode(iv + cipher.encrypt(raw))
+        else:
+            return raw
+
+    def decrypt(self, enc):
+        if CRYPTO:
+            enc = base64.b64decode(str(enc))
+            iv = enc[:AES.block_size]
+            cipher = AES.new(self.pharase, AES.MODE_CBC, iv)
+            decrypted_text = self.unfill(cipher.decrypt(
+                enc[AES.block_size:])).decode('utf-8')
+            if decrypted_text.isdigit():
+                decrypted_text = int(decrypted_text)
+            return decrypted_text
+        else:
+            if enc.isdigit():
+                enc = int(enc)
+            return enc
+
+    def fill(self, s):
+        return (s + (self.block_size - len(s) % self.block_size) *
+                chr(self.block_size - len(s) % self.block_size))
+
+    def unfill(self, s):
+        return s[:-ord(s[len(s)-1:])]
 
 
 def run_syscall(cmd):
@@ -28,21 +73,24 @@ else:
     cmd = "echo %USERPROFILE%"
 
 out = run_syscall(cmd)
+pharase = out.rsplit(PATH_SEPERATOR, 1)[1]
+CIPHER = Cipher1010(pharase)
 REPOFILE = "%(out)s%(ps)s.kivy-1010%(ps)skivy1010" % {
     'out': out.rstrip(), 'ps': PATH_SEPERATOR}
 
 DB = JsonStore(REPOFILE)
 directory = os.path.dirname(REPOFILE)
+
 if not os.path.exists(directory):
     os.makedirs(directory)
 if not DB.store_exists('high_score'):
-    DB.store_put('high_score', 0)
+    DB.store_put('high_score', CIPHER.encrypt(0))
 if not DB.store_exists('theme'):
     DB.store_put('theme', 'light')
 if not DB.store_exists('sound'):
     DB.store_put('sound', True)
 if not DB.store_exists('score'):
-    DB.store_put('score', 0)
+    DB.store_put('score', CIPHER.encrypt(0))
 if not DB.store_exists('board'):
     DB.store_put('board', {})
 if not DB.store_exists('shapes'):
@@ -60,7 +108,8 @@ SOUNDS = {
     'placed': {
         'path': 'assets/sounds/placed.mp3', 'volume': .8, 'priority': 2},
     'missed_placed': {
-        'path': 'assets/sounds/missed_placed.mp3', 'volume': .4, 'priority': 4},
+        'path': 'assets/sounds/missed_placed.mp3',
+        'volume': .4, 'priority': 4},
     'line_clear': {
         'path': 'assets/sounds/line_clear.mp3', 'volume': .2, 'priority': 1},
     'new_shapes': {

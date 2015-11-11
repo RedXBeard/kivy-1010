@@ -19,7 +19,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.core.audio import SoundLoader
 from kivy.properties import NumericProperty
-from config import DB, THEME, COLOR, SHAPES, SOUNDS, WIN_SIZE
+from config import DB, THEME, COLOR, SHAPES, SOUNDS, WIN_SIZE, CIPHER
 
 __version__ = '1.5.0'
 
@@ -478,10 +478,13 @@ class Kivy1010(GridLayout):
         self.movement_detect()
 
     def set_score(self):
-        self.score = DB.store_get('score')
+        try:
+            self.score = CIPHER.decrypt(DB.store_get('score'))
+        except TypeError:
+            self.score = 0
 
     def sync_score(self, score):
-        DB.store_put('score', score)
+        DB.store_put('score', CIPHER.encrypt(score))
         DB.store_sync()
 
     def sync_board(self, board):
@@ -672,7 +675,7 @@ class Kivy1010(GridLayout):
         button = Button(background_color=get_color_from_hex('58CB85'))
         boxlayout = BoxLayout(orientation='vertical')
         set_color(boxlayout, get_color_from_hex('E2DDD5'))
-        img = Image(source='assets/images/medal.png')
+        img = Image(source='assets/images/award.png')
         label = Label(
             text=str(self.get_record()),
             color=get_color_from_hex('5BBEE5'),
@@ -725,7 +728,7 @@ class Kivy1010(GridLayout):
         self.remove_pause_but()
         label1 = Label(
             text='No Moves Left', color=get_color_from_hex('5BBEE5'))
-        img = Image(source='assets/images/medal.png')
+        img = Image(source='assets/images/award.png')
         label2 = Label(
             text=str(self.score), font_size=30,
             color=get_color_from_hex('5BBEE5'))
@@ -768,18 +771,22 @@ class Kivy1010(GridLayout):
 
     def set_record(self):
         try:
+            high_score = CIPHER.decrypt(DB.store_get('high_score'))
+        except (KeyError, TypeError):
             high_score = DB.store_get('high_score')
-        except KeyError:
+        except ValueError:
             high_score = 0
 
         if high_score < self.score:
-            DB.store_put('high_score', self.score)
+            DB.store_put('high_score', CIPHER.encrypt(self.score))
         DB.store_sync()
 
     def get_record(self):
         try:
+            high_score = CIPHER.decrypt(DB.store_get('high_score'))
+        except (KeyError, TypeError):
             high_score = DB.store_get('high_score')
-        except KeyError:
+        except ValueError:
             high_score = 0
         return high_score
 
@@ -981,7 +988,7 @@ class KivyMinesApp(App):
                         board_visual.update({index: color.rgba})
                     index += 1
             DB.store_put('board', board_visual)
-            DB.store_put('score', root.score)
+            DB.store_put('score', CIPHER.encrypt(root.score))
             DB.store_sync()
         except AttributeError:
             pass
