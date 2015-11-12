@@ -38,7 +38,7 @@ class Cipher1010(object):
                 decrypted_text = int(decrypted_text)
             return decrypted_text
         else:
-            if enc.isdigit():
+            if str(enc).isdigit():
                 enc = int(enc)
             return enc
 
@@ -47,7 +47,7 @@ class Cipher1010(object):
                 chr(self.block_size - len(s) % self.block_size))
 
     def unfill(self, s):
-        return s[:-ord(s[len(s)-1:])]
+        return s[:-ord(s[len(s) - 1:])]
 
 
 def run_syscall(cmd):

@@ -798,6 +798,7 @@ class Kivy1010(GridLayout):
             label = Label(
                 color=(0, 0, 0, 1), size_hint=(None, None),
                 size=(wh / 11, wh / 11))
+            label.curve = wh * 9 / 330.0
             color = pre_board.get(str(99 - i), self.labels)
             set_color(label, color)
             if color != self.labels:
@@ -823,6 +824,7 @@ class Kivy1010(GridLayout):
         per_shape_width = float(Window.width) / 3
         per_shape_height = float(self.coming.height)
 
+        wh = min((330.0 * Window.width / 520), (330.0 * Window.height / 600))
         for scatter in scatters:
             scatter.calculate_shape_size()
             shape = None
@@ -845,6 +847,7 @@ class Kivy1010(GridLayout):
                     box = Label(
                         size_hint=(None, None),
                         size=(scatter.wh_per, scatter.wh_per))
+                    box.curve = wh * 9 / 330.0
                     set_color(box, self.background)
                 else:
                     box = Image(
