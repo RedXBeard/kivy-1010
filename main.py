@@ -145,6 +145,7 @@ class Shape(GridLayout):
     """
     Generate shapes from given already set list with random colour.
     """
+
     def __init__(
             self, rows=None, cols=None, array=None,
             color=None, color_set=COLOR):
@@ -301,8 +302,8 @@ class CustomScatter(ScatterLayout):
             anim.start(self)
 
         active_shapes = map(lambda x: x[0], filter(lambda x: x,
-                            map(lambda x: x.children[0].children,
-                                board.parent.coming.children)))
+                                                   map(lambda x: x.children[0].children,
+                                                       board.parent.coming.children)))
 
         possible_places = False
         free_place = []
@@ -412,15 +413,15 @@ class CustomScatter(ScatterLayout):
 
 
 class Sound(object):
+
     def __init__(self):
         for sound_name, sound_info in SOUNDS.items():
             sound_name = 'sound_' + sound_name
-            setattr(self, sound_name, None)
-            sound = getattr(self, sound_name)
             sound = SoundLoader.load(sound_info['path'])
             sound.volume = sound_info['volume']
             sound.priority = sound_info['priority']
             setattr(self, sound_name, sound)
+        self.sounds = self.get_sounds()
 
     def get_sounds(self):
         keys = filter(lambda x: x.find('sound_') != -1, self.__dict__.keys())
@@ -435,15 +436,20 @@ class Sound(object):
         sound_key = 'sound_' + sound_key
         if SOUND:
             played_sounds = filter(
-                lambda x: x[1].state == 'play', self.get_sounds().items())
+                lambda x: x[1].state == 'play', self.sounds.items())
             sound = getattr(self, sound_key)
+            sound_on = False
             for sounds in played_sounds:
-                if sounds[1].priority >= sound.priority:
+                if (sounds[1].priority >= sound.priority or
+                        sounds[1].priority == 0):
                     sounds[1].stop()
-            sound.play()
+                else:
+                    sound_on = True
+            if not sound_on:
+                sound.play()
 
     def stop(self):
-        sounds = map(lambda x: x[1], self.get_sounds().items())
+        sounds = map(lambda x: x, self.sounds.values())
         for sound in sounds:
             sound.stop()
 
@@ -471,10 +477,9 @@ class Kivy1010(GridLayout):
         self.sound = Sound()
         self.high_score = self.get_record()
         self.popup = None
-        self.create_on_start_popup()
+        self.go()
         Clock.schedule_once(lambda x: self.check_update(), 5)
         Clock.schedule_once(lambda dt: self.update_score(), .04)
-        # Not Yet complete. will be available on 1.5.0 version
         self.movement_detect()
 
     def set_score(self):
@@ -606,8 +611,9 @@ class Kivy1010(GridLayout):
             self.high_score = self.get_record()
             self.set_score()
             self.visual_score = 0
-            self.popup.dismiss()
-            self.popup = None
+            if self.popup:
+                self.popup.dismiss()
+                self.popup = None
             self.refresh_board()
             self.coming_shapes()
             self.clear_lines(get_lines(range(0, 100)))
@@ -670,6 +676,8 @@ class Kivy1010(GridLayout):
             self.popup.dismiss()
         self.remove_pause_but()
         button = Button(background_color=get_color_from_hex('58CB85'))
+        button.curve = 25
+        set_color(button, get_color_from_hex('58CB85'))
         boxlayout = BoxLayout(orientation='vertical')
         set_color(boxlayout, get_color_from_hex('E2DDD5'))
         img = Image(source='assets/images/medal.png')
@@ -680,6 +688,7 @@ class Kivy1010(GridLayout):
         boxlayout.add_widget(img)
         boxlayout.add_widget(label)
         theme = Button(text_width=(self.width, None), halign='left')
+        theme.curve = 25
         image_source = 'assets/images/moon.png'
         if self.theme == "dark":
             image_source = 'assets/images/sun.png'
@@ -689,6 +698,8 @@ class Kivy1010(GridLayout):
 
         if args and args[0].id != 'updater':
             restart = Button(background_color=get_color_from_hex('EC9449'))
+            restart.curve = 25
+            set_color(restart, get_color_from_hex('EC9449'))
             restart.image.source = 'assets/images/refresh.png'
             restart.bind(on_press=self.go)
             button.bind(on_press=self.keep_on)
@@ -706,6 +717,8 @@ class Kivy1010(GridLayout):
         layout.add_widget(boxlayout)
         sound_theme_box = GridLayout(cols=2, rows=1, spacing=(2, 0))
         sound = Button(background_color=get_color_from_hex('EC9449'))
+        sound.curve = 25
+        set_color(sound, get_color_from_hex('EC9449'))
         sound.image.source = 'assets/images/sound_%s.png' % (
             SOUND and 'on' or 'off'
         )
@@ -721,7 +734,6 @@ class Kivy1010(GridLayout):
         self.popup.open()
 
     def create_on_end_popup(self):
-        global SOUND
         self.remove_pause_but()
         label1 = Label(
             text='No Moves Left', color=get_color_from_hex('5BBEE5'))
@@ -730,6 +742,8 @@ class Kivy1010(GridLayout):
             text=str(self.score), font_size=30,
             color=get_color_from_hex('5BBEE5'))
         button = Button(background_color=get_color_from_hex('58CB85'))
+        button.curve = 25
+        set_color(button, get_color_from_hex('58CB85'))
         button.bind(on_press=self.go)
 
         boxlayout = BoxLayout(orientation='vertical')
@@ -738,6 +752,7 @@ class Kivy1010(GridLayout):
         boxlayout.add_widget(label2)
 
         theme = Button(text_width=(self.width, None), halign='left')
+        theme.curve = 25
         theme.bind(on_press=self.change_theme)
         image_source = 'assets/images/moon.png'
         if self.theme == "dark":
@@ -746,6 +761,8 @@ class Kivy1010(GridLayout):
 
         sound_theme_box = GridLayout(cols=2, rows=1, spacing=(2, 0))
         sound = Button(background_color=get_color_from_hex('EC9449'))
+        sound.curve = 25
+        set_color(sound, get_color_from_hex('EC9449'))
         sound.image.source = 'assets/images/sound_%s.png' % (
             SOUND and 'on' or 'off')
         sound.bind(on_press=self.change_sound)

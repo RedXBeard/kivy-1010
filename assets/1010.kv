@@ -11,21 +11,24 @@
         Rectangle:
             pos: self.pos
             size: self.size
+            source: 'assets/images/trans.png'
 
 <Button>
     bold: True
-    background_normal: ""
-	background_down: ""
-	background_disabled_down: ""
-	background_disabled_normal: ""
-	from_pause: False
-	image: image
-	Image:
-	    id: image
-	    source: 'assets/images/play.png'
-	    pos: self.parent.pos[0]+self.parent.width/2-self.width/2, self.parent.pos[1]+self.parent.height/2-self.height/2
+    background_normal: 'assets/images/trans.png'
+    background_down: 'assets/images/trans.png'
+    # background_normal: ''
+    # background_down: ''
+    background_disabled_down: ""
+    background_disabled_normal: ""
+    from_pause: False
+    image: image
+    Image:
+        id: image
+        source: 'assets/images/play.png'
+        pos: self.parent.pos[0]+self.parent.width/2-self.width/2, self.parent.pos[1]+self.parent.height/2-self.height/2
         size: map(lambda x: x/2, self.parent.size)
-	    on_size: self.size=map(lambda x: x/2, self.parent.size)
+        on_size: self.size=map(lambda x: x/2, self.parent.size)
 
 <Label>
     canvas.before:
