@@ -468,6 +468,7 @@ class Kivy1010(GridLayout):
     popup = None
     info_popup = None
     last_move = None
+    curve = 9
 
     def __init__(self):
         global SOUND
@@ -934,15 +935,14 @@ class Kivy1010(GridLayout):
         except:
             pass
 
-        curve = 9
         try:
             wh = min((330.0 * width / 520), (330.0 * height / 600))
-            curve = wh * 9 / 330.0
+            self.curve = wh * 9 / 330.0
             padding = (width > wh) and (width - wh) / 2 - 20 or 0
             self.board.width = self.board.height = wh + 10
             for label in self.board.children:
                 label.width = label.height = wh / 11
-                label.curve = curve
+                label.curve = self.curve
             self.board.padding = (padding, 10, padding, 10)
         except:
             pass
@@ -963,7 +963,7 @@ class Kivy1010(GridLayout):
                     index = 0
                     for label in shape.children:
                         label.size = (scatter.wh_per, scatter.wh_per)
-                        label.curve = curve
+                        label.curve = self.curve
                         if index % shape.cols == 0:
                             shape_height += scatter.wh_per + 1
 

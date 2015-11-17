@@ -73,23 +73,23 @@ Image:
             Color:
                 rgba: get_color_from_hex('E2DDD5')
             Rectangle:
-                pos: self.pos[0], self.pos[1]+3
-                size: self.size[0], self.size[1]-6
+                pos: self.pos[0], self.pos[1]+root.curve/2
+                size: self.size[0], self.size[1]-root.curve
             Rectangle:
-                pos: self.pos[0]+3, self.pos[1]
-                size: self.size[0]-6, self.size[1]
+                pos: self.pos[0]+root.curve/2, self.pos[1]
+                size: self.size[0]-root.curve, self.size[1]
             Ellipse:
-                size: 6, 6
+                size: root.curve, root.curve
                 pos: self.pos[0], self.pos[1]
             Ellipse:
-                size: 6, 6
-                pos: self.pos[0], self.pos[1]+self.height-6
+                size: root.curve, root.curve
+                pos: self.pos[0], self.pos[1]+self.height-root.curve
             Ellipse:
-                size: 6, 6
-                pos: self.pos[0]+self.width-6, self.pos[1]
+                size: root.curve, root.curve
+                pos: self.pos[0]+self.width-root.curve, self.pos[1]
             Ellipse:
-                size: 6, 6
-                pos: self.pos[0]+self.width-6, self.pos[1]+self.height-6
+                size: root.curve, root.curve
+                pos: self.pos[0]+self.width-root.curve, self.pos[1]+self.height-root.curve
         id: score_board
         visual_score_label: visual_score_label
         cols: 4
