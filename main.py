@@ -145,6 +145,7 @@ class Shape(GridLayout):
     """
     Generate shapes from given already set list with random colour.
     """
+
     def __init__(
             self, rows=None, cols=None, array=None,
             color=None, color_set=COLOR):
@@ -301,8 +302,8 @@ class CustomScatter(ScatterLayout):
             anim.start(self)
 
         active_shapes = map(lambda x: x[0], filter(lambda x: x,
-                            map(lambda x: x.children[0].children,
-                                board.parent.coming.children)))
+                                                   map(lambda x: x.children[0].children,
+                                                       board.parent.coming.children)))
 
         possible_places = False
         free_place = []
@@ -412,15 +413,15 @@ class CustomScatter(ScatterLayout):
 
 
 class Sound(object):
+
     def __init__(self):
         for sound_name, sound_info in SOUNDS.items():
             sound_name = 'sound_' + sound_name
-            setattr(self, sound_name, None)
-            sound = getattr(self, sound_name)
             sound = SoundLoader.load(sound_info['path'])
             sound.volume = sound_info['volume']
             sound.priority = sound_info['priority']
             setattr(self, sound_name, sound)
+        self.sounds = self.get_sounds()
 
     def get_sounds(self):
         keys = filter(lambda x: x.find('sound_') != -1, self.__dict__.keys())
@@ -435,15 +436,20 @@ class Sound(object):
         sound_key = 'sound_' + sound_key
         if SOUND:
             played_sounds = filter(
-                lambda x: x[1].state == 'play', self.get_sounds().items())
+                lambda x: x[1].state == 'play', self.sounds.items())
             sound = getattr(self, sound_key)
+            sound_on = False
             for sounds in played_sounds:
-                if sounds[1].priority >= sound.priority:
+                if (sounds[1].priority >= sound.priority or
+                        sounds[1].priority == 0):
                     sounds[1].stop()
-            sound.play()
+                else:
+                    sound_on = True
+            if not sound_on:
+                sound.play()
 
     def stop(self):
-        sounds = map(lambda x: x[1], self.get_sounds().items())
+        sounds = map(lambda x: x, self.sounds.values())
         for sound in sounds:
             sound.stop()
 
@@ -462,6 +468,7 @@ class Kivy1010(GridLayout):
     popup = None
     info_popup = None
     last_move = None
+    curve = 9
 
     def __init__(self):
         global SOUND
@@ -471,10 +478,9 @@ class Kivy1010(GridLayout):
         self.sound = Sound()
         self.high_score = self.get_record()
         self.popup = None
-        self.create_on_start_popup()
+        self.go()
         Clock.schedule_once(lambda x: self.check_update(), 5)
         Clock.schedule_once(lambda dt: self.update_score(), .04)
-        # Not Yet complete. will be available on 1.5.0 version
         self.movement_detect()
 
     def set_score(self):
@@ -606,8 +612,9 @@ class Kivy1010(GridLayout):
             self.high_score = self.get_record()
             self.set_score()
             self.visual_score = 0
-            self.popup.dismiss()
-            self.popup = None
+            if self.popup:
+                self.popup.dismiss()
+                self.popup = None
             self.refresh_board()
             self.coming_shapes()
             self.clear_lines(get_lines(range(0, 100)))
@@ -665,35 +672,80 @@ class Kivy1010(GridLayout):
         except URLError:
             pass
 
-    def create_on_start_popup(self, *args):
-        if self.popup:
-            self.popup.dismiss()
-        self.remove_pause_but()
+    def generate_play_button(self, *args):
         button = Button(background_color=get_color_from_hex('58CB85'))
-        boxlayout = BoxLayout(orientation='vertical')
-        set_color(boxlayout, get_color_from_hex('E2DDD5'))
-        img = Image(source='assets/images/medal.png')
-        label = Label(
-            text=str(self.get_record()),
-            color=get_color_from_hex('5BBEE5'),
-            font_size=30)
-        boxlayout.add_widget(img)
-        boxlayout.add_widget(label)
+        button.curve = 25
+        button.image.source = 'assets/images/play.png'
+        set_color(button, get_color_from_hex('58CB85'))
+        return button
+
+    def generate_restart_button(self, *args):
+        restart = Button(background_color=get_color_from_hex('EC9449'))
+        restart.curve = 25
+        set_color(restart, get_color_from_hex('EC9449'))
+        restart.image.source = 'assets/images/refresh.png'
+        restart.bind(on_press=self.go)
+        return restart
+
+    def generate_theme_button(self, *args):
         theme = Button(text_width=(self.width, None), halign='left')
+        theme.curve = 25
         image_source = 'assets/images/moon.png'
         if self.theme == "dark":
             image_source = 'assets/images/sun.png'
         theme.image.source = image_source
+        return theme
+
+    def generate_sound_button(self, *args):
+        sound = Button(background_color=get_color_from_hex('EC9449'))
+        sound.curve = 25
+        set_color(sound, get_color_from_hex('EC9449'))
+        sound.image.source = 'assets/images/sound_%s.png' % (
+            SOUND and 'on' or 'off'
+        )
+        sound.bind(on_press=self.change_sound)
+        return sound
+
+    def generate_medal_label(self, *args):
+        label = Label(
+            color=get_color_from_hex('5BBEE5'),
+            font_size=30, size_hint=(.7, 1))
+        label.curve = 25
+        label.image.source = 'assets/images/medal.png'
+        return label
+
+    def generate_score_label(self, *args):
+        label = Label(
+            text=str(self.get_record()),
+            color=get_color_from_hex('5BBEE5'),
+            font_size=30)
+        label.curve = 25
+        return label
+
+    def create_on_start_popup(self, *args):
+        if self.popup:
+            self.popup.dismiss()
+        self.remove_pause_but()
+
+        gridlayout = GridLayout(
+            cols=2, rows=1, spacing=(-20, 10), padding=(0, 0, 0, 0))
+
+        button = self.generate_play_button()
+
+        score_label = self.generate_score_label()
+        medal_label = self.generate_medal_label()
+        gridlayout.add_widget(medal_label)
+        gridlayout.add_widget(score_label)
+
         layout = GridLayout(
             cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
 
         if args and args[0].id != 'updater':
-            restart = Button(background_color=get_color_from_hex('EC9449'))
-            restart.image.source = 'assets/images/refresh.png'
-            restart.bind(on_press=self.go)
+            restart = self.generate_restart_button()
+            theme = self.generate_theme_button()
             button.bind(on_press=self.keep_on)
             theme.bind(on_press=self.change_just_theme)
-            play_restart_box = GridLayout(cols=2, rows=1, spacing=(2, 0))
+            play_restart_box = GridLayout(cols=2, rows=1, spacing=(10, 0))
             play_restart_box.add_widget(button)
             play_restart_box.add_widget(restart)
             layout.add_widget(play_restart_box)
@@ -703,65 +755,64 @@ class Kivy1010(GridLayout):
             button.bind(on_press=self.go)
             theme.bind(on_press=self.change_theme)
 
-        layout.add_widget(boxlayout)
-        sound_theme_box = GridLayout(cols=2, rows=1, spacing=(2, 0))
-        sound = Button(background_color=get_color_from_hex('EC9449'))
-        sound.image.source = 'assets/images/sound_%s.png' % (
-            SOUND and 'on' or 'off'
-        )
-        sound.bind(on_press=self.change_sound)
+        layout.add_widget(gridlayout)
+        sound_theme_box = GridLayout(cols=2, rows=1, spacing=(10, 0))
+        sound = self.generate_sound_button()
         sound_theme_box.add_widget(theme)
         sound_theme_box.add_widget(sound)
         layout.add_widget(sound_theme_box)
 
         self.popup = Popup(
             content=layout, size_hint=(None, None), size=(200, 350),
-            title='Kivy 1010', title_color=(0, 0, 0, 1), auto_dismiss=False,
-            border=(0, 0, 0, 0), separator_color=get_color_from_hex('7B8ED4'))
+            title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
+            separator_height=0)
+        title = self.popup.children[0].children[2]
+        self.popup.children[0].remove_widget(title)
         self.popup.open()
 
     def create_on_end_popup(self):
-        global SOUND
         self.remove_pause_but()
-        label1 = Label(
-            text='No Moves Left', color=get_color_from_hex('5BBEE5'))
-        img = Image(source='assets/images/medal.png')
-        label2 = Label(
-            text=str(self.score), font_size=30,
-            color=get_color_from_hex('5BBEE5'))
-        button = Button(background_color=get_color_from_hex('58CB85'))
+        label = Label(
+            text='No Moves Left', color=get_color_from_hex('5BBEE5'),
+            size_hint=(1, .3))
+        label.curve = 25
+
+        gridlayout = GridLayout(
+            cols=1, rows=2, spacing=(0, 3))
+
+        score_gridlayout = GridLayout(
+            cols=2, rows=1, spacing=(-20, -10), padding=(0, 0, 0, 0))
+
+        button = self.generate_play_button()
         button.bind(on_press=self.go)
+        button.size_hint = (1, .5)
 
-        boxlayout = BoxLayout(orientation='vertical')
-        boxlayout.add_widget(label1)
-        boxlayout.add_widget(img)
-        boxlayout.add_widget(label2)
+        score_label = self.generate_score_label()
+        medal_label = self.generate_medal_label()
+        score_gridlayout.add_widget(medal_label)
+        score_gridlayout.add_widget(score_label)
+        gridlayout.add_widget(label)
+        gridlayout.add_widget(score_gridlayout)
 
-        theme = Button(text_width=(self.width, None), halign='left')
+        theme = self.generate_theme_button()
         theme.bind(on_press=self.change_theme)
-        image_source = 'assets/images/moon.png'
-        if self.theme == "dark":
-            image_source = 'assets/images/sun.png'
-        theme.image.source = image_source
 
-        sound_theme_box = GridLayout(cols=2, rows=1, spacing=(2, 0))
-        sound = Button(background_color=get_color_from_hex('EC9449'))
-        sound.image.source = 'assets/images/sound_%s.png' % (
-            SOUND and 'on' or 'off')
-        sound.bind(on_press=self.change_sound)
+        sound_theme_box = GridLayout(cols=2, rows=1, spacing=(10, 0), size_hint=(1, .5))
+        sound = self.generate_sound_button()
         sound_theme_box.add_widget(theme)
         sound_theme_box.add_widget(sound)
 
         layout = GridLayout(
             cols=1, rows=3, spacing=(10, 10), padding=(3, 6, 3, 6))
-        layout.add_widget(boxlayout)
+        layout.add_widget(gridlayout)
         layout.add_widget(button)
         layout.add_widget(sound_theme_box)
 
         self.popup = Popup(
             content=layout, size_hint=(None, None), size=(200, 350),
-            title='Kivy 1010', title_color=(0, 0, 0, 1), auto_dismiss=False,
-            border=(0, 0, 0, 0), separator_color=get_color_from_hex('7B8ED4'))
+            auto_dismiss=False, border=(0, 0, 0, 0), separator_height=0)
+        title = self.popup.children[0].children[2]
+        self.popup.children[0].remove_widget(title)
         self.popup.open()
         self.sync_score(0)
         self.sync_board({})
@@ -791,6 +842,7 @@ class Kivy1010(GridLayout):
             label = Label(
                 color=(0, 0, 0, 1), size_hint=(None, None),
                 size=(wh / 11, wh / 11))
+            label.curve = self.curve
             color = pre_board.get(str(99 - i), self.labels)
             set_color(label, color)
             if color != self.labels:
@@ -838,6 +890,7 @@ class Kivy1010(GridLayout):
                     box = Label(
                         size_hint=(None, None),
                         size=(scatter.wh_per, scatter.wh_per))
+                    box.curve = self.curve
                     set_color(box, self.background)
                 else:
                     box = Image(
@@ -882,15 +935,14 @@ class Kivy1010(GridLayout):
         except:
             pass
 
-        curve = 9
         try:
             wh = min((330.0 * width / 520), (330.0 * height / 600))
-            curve = wh * 9 / 330.0
+            self.curve = wh * 9 / 330.0
             padding = (width > wh) and (width - wh) / 2 - 20 or 0
             self.board.width = self.board.height = wh + 10
             for label in self.board.children:
                 label.width = label.height = wh / 11
-                label.curve = curve
+                label.curve = self.curve
             self.board.padding = (padding, 10, padding, 10)
         except:
             pass
@@ -911,7 +963,7 @@ class Kivy1010(GridLayout):
                     index = 0
                     for label in shape.children:
                         label.size = (scatter.wh_per, scatter.wh_per)
-                        label.curve = curve
+                        label.curve = self.curve
                         if index % shape.cols == 0:
                             shape_height += scatter.wh_per + 1
 
