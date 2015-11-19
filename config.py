@@ -3,6 +3,7 @@ from subprocess import Popen, PIPE
 
 from kivy.storage.jsonstore import JsonStore
 from kivy.utils import get_color_from_hex
+from kivy import platform
 
 
 def run_syscall(cmd):
@@ -14,22 +15,24 @@ def run_syscall(cmd):
     out, err = p.communicate()
     return out.rstrip()
 
-
-PATH_SEPERATOR = '/'
-if os.path.realpath(__file__).find('\\') != -1:
-    PATH_SEPERATOR = '\\'
-
-PROJECT_PATH = PATH_SEPERATOR.join(
-    os.path.realpath(__file__).split(PATH_SEPERATOR)[:-1])
-
-if PATH_SEPERATOR == '/':
+if platform in ['linux', 'macosx']:
+    PATH_SEPERATOR = '/'
     cmd = "echo $HOME"
+elif platform == 'android':
+    PATH_SEPERATOR = '/'
+    cmd = ""
 else:
+    PATH_SEPERATOR = '\\'
     cmd = "echo %USERPROFILE%"
 
-out = run_syscall(cmd)
-REPOFILE = "%(out)s%(ps)s.kivy-1010%(ps)skivy1010" % {
-    'out': out.rstrip(), 'ps': PATH_SEPERATOR}
+PROJECT_PATH = os.path.realpath(__file__).rsplit(PATH_SEPERATOR, 1)[0]
+
+if cmd:
+    out = run_syscall(cmd)
+    REPOFILE = "%(out)s%(ps)s.kivy-1010%(ps)skivy1010" % {
+        'out': out.rstrip(), 'ps': PATH_SEPERATOR}
+else:
+    REPOFILE = os.path.join(PROJECT_PATH, "kivy1010")
 
 DB = JsonStore(REPOFILE)
 directory = os.path.dirname(REPOFILE)
