@@ -777,9 +777,6 @@ class Kivy1010(GridLayout):
             size_hint=(1, .3))
         label.curve = 25
 
-        button = self.generate_play_button()
-        button.bind(on_press=self.go)
-
         gridlayout = GridLayout(
             cols=1, rows=2, spacing=(0, 3))
 
@@ -787,6 +784,7 @@ class Kivy1010(GridLayout):
             cols=2, rows=1, spacing=(-20, -10), padding=(0, 0, 0, 0))
 
         button = self.generate_play_button()
+        button.bind(on_press=self.go)
         button.size_hint = (1, .5)
 
         score_label = self.generate_score_label()
@@ -844,6 +842,7 @@ class Kivy1010(GridLayout):
             label = Label(
                 color=(0, 0, 0, 1), size_hint=(None, None),
                 size=(wh / 11, wh / 11))
+            label.curve = self.curve
             color = pre_board.get(str(99 - i), self.labels)
             set_color(label, color)
             if color != self.labels:
@@ -891,6 +890,7 @@ class Kivy1010(GridLayout):
                     box = Label(
                         size_hint=(None, None),
                         size=(scatter.wh_per, scatter.wh_per))
+                    box.curve = self.curve
                     set_color(box, self.background)
                 else:
                     box = Image(
