@@ -60,7 +60,7 @@ Image:
 <Kivy1010>
     cols: 1
     rows: 3
-    padding: 20, 10, 20, 0
+    padding: 20, 0, 20, 0
     score_board: score_board
     board: board
     coming: coming
@@ -69,54 +69,31 @@ Image:
     comingRight: comingRight
 
     GridLayout:
-        canvas.before:
-            Color:
-                rgba: get_color_from_hex('E2DDD5')
-            Rectangle:
-                pos: self.pos[0], self.pos[1]+root.curve/2
-                size: self.size[0], self.size[1]-root.curve
-            Rectangle:
-                pos: self.pos[0]+root.curve/2, self.pos[1]
-                size: self.size[0]-root.curve, self.size[1]
-            Ellipse:
-                size: root.curve, root.curve
-                pos: self.pos[0], self.pos[1]
-            Ellipse:
-                size: root.curve, root.curve
-                pos: self.pos[0], self.pos[1]+self.height-root.curve
-            Ellipse:
-                size: root.curve, root.curve
-                pos: self.pos[0]+self.width-root.curve, self.pos[1]
-            Ellipse:
-                size: root.curve, root.curve
-                pos: self.pos[0]+self.width-root.curve, self.pos[1]+self.height-root.curve
         id: score_board
         visual_score_label: visual_score_label
+        high_score_label: high_score_label
         cols: 4
         rows: 1
         size_hint: None, None
         spacing: 4, 4
-        height: 50
         Label:
             id: visual_score_label
             text: '%s'%str(root.visual_score)
             color: get_color_from_hex('58CB85')
-            size_hint: None, None
-            size: 185, 50
-            font_size: 30
+            size_hint: None, 1
+            font_size: '50sp'
             text_size: self.width, None
             halign: 'right'
         Image:
-            source: 'assets/images/medal.png'
-            size_hint: None, None
-            size: 30, 50
+            source: 'assets/images/award.png'
+            size_hint: None, 1
+            width: '50sp'
         Label:
+            id: high_score_label
             text: '%s'%str(root.high_score)
             color: get_color_from_hex('5BBEE5')
-            size_hint: 1, None
-            height: 50
-            pos: 10, 540
-            font_size: 30
+            size_hint: 1, 1
+            font_size: '50sp'# max(root.width, root.height) / 30
             text_size: self.width, None
             halign: 'left'
 
@@ -126,6 +103,7 @@ Image:
         rows: 10
         spacing: 3, 3
         size_hint: None, None
+        padding: 0, 0, 0, 0
 
     FloatLayout:
         id: coming

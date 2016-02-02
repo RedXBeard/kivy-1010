@@ -9,7 +9,7 @@ from kivy.utils import get_color_from_hex
 from kivy.core.window import Window
 from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
-from kivy.uix.boxlayout import BoxLayout
+# from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scatterlayout import ScatterLayout
 from kivy.uix.image import Image
 from kivy.config import Config
@@ -19,6 +19,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.core.audio import SoundLoader
 from kivy.properties import NumericProperty
+from kivy import platform
 from config import DB, THEME, COLOR, SHAPES, SOUNDS, WIN_SIZE
 
 __version__ = '1.5.0'
@@ -33,6 +34,10 @@ __version__ = '1.5.0'
 """
 
 SOUND = False
+
+
+def get_ratio():
+    return min((330 * float(Window.width) / 800), (330 * float(Window.height) / 600))
 
 
 def get_color(obj):
@@ -151,8 +156,9 @@ class Shape(GridLayout):
             color=None, color_set=COLOR):
         super(Shape, self).__init__()
         shape_key = choice(SHAPES.keys())
+        # shape_key = "fucked"
         shape = choice(SHAPES[shape_key])
-        shape = SHAPES[shape_key][0]
+        # shape = SHAPES[shape_key][1]
         ccolor = choice(color_set)
         self.rows = rows and rows or shape['rows']
         self.cols = cols and cols or shape['cols']
@@ -167,24 +173,43 @@ class Shape(GridLayout):
                 result.append(get_color(child))
         return result
 
+    def resize(self):
+        try:
+            label = self.children[0]
+            self.size = (label.size[0] * self.rows,
+                         label.size[1] * self.cols)
+        except IndexError:
+            pass
+
 
 class CustomScatter(ScatterLayout):
     """Shape class"""
     wh_per = 25
     last_moved = None
+    touch_distance = 0
 
     def on_transform_with_touch(self, touch):
         """take action when shape touched."""
         super(CustomScatter, self).on_transform_with_touch(touch)
+
         root = self.parent.parent
         root.last_moved = datetime.now()
         root.clear_free_place()
         try:
             if self.do_translation_x and self.do_translation_y:
                 shape = self.children[0].children[0]
+                orig_height = shape.rows * shape.children[0].size[0] + shape.rows * shape.spacing[0]
+                per_box = (((len(shape.children) * root.per_box) +
+                            (len(shape.children) * 3)) -
+                           (len(shape.children) *
+                           (root.per_box - 5))) / len(shape.children)
                 for label in shape.children:
-                    label.size = (self.wh_per + 3, self.wh_per + 3)
-                shape.spacing = (5, 5)
+                    label.size = (root.per_box - 5, root.per_box - 5)
+                shape.spacing = (per_box, per_box)
+                shape.resize()
+                resized_height = shape.rows * shape.children[0].size[0] + shape.rows * shape.spacing[0]
+                if not self.touch_distance:
+                    self.touch_distance = resized_height - orig_height
         except IndexError:
             pass
 
@@ -193,11 +218,18 @@ class CustomScatter(ScatterLayout):
 
     def on_touch_up(self, touch):
         super(CustomScatter, self).on_touch_up(touch)
-        self.reset_shape()
         self.position_calculation()
+        self.reset_shape()
 
     def on_touch_down(self, touch):
         super(CustomScatter, self).on_touch_down(touch)
+        posx_check = self.pos[0] < touch.pos[0] < self.pos[0] + self.width
+        posy_check = self.pos[1] < touch.pos[1] < self.pos[1] + self.height
+        if platform == 'android' and posx_check and posy_check:
+            anim = Animation(
+                x=self.pos[0], y=(touch.pos[1] + 250),
+                t='linear', duration=.1)
+            anim.start(self)
 
     def reset_shape(self):
         try:
@@ -206,12 +238,13 @@ class CustomScatter(ScatterLayout):
                 for label in shape.children:
                     label.size = (self.wh_per, self.wh_per)
                 shape.spacing = (2, 2)
+                shape.resize()
+                self.touch_distance = 0
         except IndexError:
             pass
 
-    def calculate_shape_size(self):
-        wh = min((330 * Window.width / 520), (330 * Window.height / 600))
-        self.wh_per = (wh / 11) - 5
+    def calculate_shape_size(self, width, height):
+        self.wh_per = ((min(width, height) - 12) / 7)
 
     def position_calculation(self):
         """
@@ -221,17 +254,16 @@ class CustomScatter(ScatterLayout):
             board = self.parent.parent.board
             labels = board.children
             obj_x, obj_y = self.pos
+            shape = self.children[0].children[0]
             flag = False
             for label in labels:
                 pos_x, pos_y = label.pos
                 lbl_wid, lbl_hei = label.size
-                pos_x_check = pos_x - 6 <= obj_x <= pos_x + lbl_wid + 3
-                pos_y_check = pos_y - 6 <= obj_y <= pos_y + lbl_hei + 3
+                pos_x_check = (pos_x - lbl_wid / 2 <= obj_x <= pos_x + lbl_wid / 2)
+                pos_y_check = (pos_y - lbl_hei / 2 <= obj_y - self.touch_distance <= pos_y + lbl_hei / 2)
                 if pos_x_check and pos_y_check:
-                    # position is available or not?
-                    lbl_index = board.children.index(label)
+                    lbl_index = labels.index(label)
                     line_left = (lbl_index / 10) * 10
-                    shape = self.children[0].children[0]
                     if shape.cols <= (lbl_index - line_left + 1):
                         self.get_colored_area(board, label)
                         flag = True
@@ -415,13 +447,17 @@ class CustomScatter(ScatterLayout):
 class Sound(object):
 
     def __init__(self):
-        for sound_name, sound_info in SOUNDS.items():
-            sound_name = 'sound_' + sound_name
-            sound = SoundLoader.load(sound_info['path'])
-            sound.volume = sound_info['volume']
-            sound.priority = sound_info['priority']
-            setattr(self, sound_name, sound)
-        self.sounds = self.get_sounds()
+        try:
+            for sound_name, sound_info in SOUNDS.items():
+                sound_name = 'sound_' + sound_name
+                sound = SoundLoader.load(sound_info['path'])
+                sound.volume = sound_info['volume']
+                sound.priority = sound_info['priority']
+                setattr(self, sound_name, sound)
+            self.sounds = self.get_sounds()
+        except Exception, e:
+            print "fucked", e
+            pass
 
     def get_sounds(self):
         keys = filter(lambda x: x.find('sound_') != -1, self.__dict__.keys())
@@ -469,6 +505,7 @@ class Kivy1010(GridLayout):
     info_popup = None
     last_move = None
     curve = 9
+    font_size = 30
 
     def __init__(self):
         global SOUND
@@ -479,7 +516,7 @@ class Kivy1010(GridLayout):
         self.high_score = self.get_record()
         self.popup = None
         self.go()
-        Clock.schedule_once(lambda x: self.check_update(), 5)
+        # Clock.schedule_once(lambda x: self.check_update(), 5)
         Clock.schedule_once(lambda dt: self.update_score(), .04)
         self.movement_detect()
 
@@ -555,6 +592,8 @@ class Kivy1010(GridLayout):
         self.labels = THEME.get(theme).get('labels')
         self.free_place_notifier = THEME[self.theme]['labels']
         self.change_board_color(self.labels)
+        set_color(self.score_board.visual_score_label, self.background)
+        set_color(self.score_board.high_score_label, self.background)
         Window.clearcolor = self.background
         DB.store_put('theme', theme)
         DB.store_sync()
@@ -577,10 +616,12 @@ class Kivy1010(GridLayout):
     def create_pause_but(self):
         if not self.get_pause_but():
             button = Button(background_color=get_color_from_hex('E2DDD5'),
-                            size_hint=(None, 1), width=50, disabled=False)
+                            size_hint=(None, 1), width=100, disabled=False)
             button.bind(on_press=self.create_on_start_popup)
             button.image.source = 'assets/images/pause_%s.png' % (
                 self.theme == 'dark' and 'dark' or 'sun')
+            button.image.size = ("5in", "5in")
+            set_color(button, self.background)
             self.score_board.add_widget(button)
 
     def pause_change_disability(self):
@@ -707,19 +748,24 @@ class Kivy1010(GridLayout):
         return sound
 
     def generate_medal_label(self, *args):
-        label = Label(
-            color=get_color_from_hex('5BBEE5'),
-            font_size=30, size_hint=(.7, 1))
+        label = Label(size_hint=(.7, 1))
         label.curve = 25
-        label.image.source = 'assets/images/medal.png'
+        label.image.source = 'assets/images/award.png'
+        label.image.size = ('50sp', '50sp')
+        set_color(label, get_color_from_hex('5BBEE5'))
         return label
 
-    def generate_score_label(self, *args):
+    def generate_score_label(self, **kwargs):
+        # score = self.get_record()
+        # if 'score' in kwargs:
+        #     score = self.score
+        score = self.score
         label = Label(
-            text=str(self.get_record()),
-            color=get_color_from_hex('5BBEE5'),
-            font_size=30)
+            text=str(score),
+            color=get_color_from_hex('E2DDD5'),
+            font_size="75sp")
         label.curve = 25
+        set_color(label, get_color_from_hex('5BBEE5'))
         return label
 
     def create_on_start_popup(self, *args):
@@ -763,7 +809,7 @@ class Kivy1010(GridLayout):
         layout.add_widget(sound_theme_box)
 
         self.popup = Popup(
-            content=layout, size_hint=(None, None), size=(200, 350),
+            content=layout, size_hint=(None, None), size=('300sp', '500sp'),
             title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
             separator_height=0)
         title = self.popup.children[0].children[2]
@@ -774,7 +820,7 @@ class Kivy1010(GridLayout):
         self.remove_pause_but()
         label = Label(
             text='No Moves Left', color=get_color_from_hex('5BBEE5'),
-            size_hint=(1, .3))
+            size_hint=(1, .3), font_size="25sp")
         label.curve = 25
 
         gridlayout = GridLayout(
@@ -809,7 +855,7 @@ class Kivy1010(GridLayout):
         layout.add_widget(sound_theme_box)
 
         self.popup = Popup(
-            content=layout, size_hint=(None, None), size=(200, 350),
+            content=layout, size_hint=(None, None), size=('300sp', '500sp'),
             auto_dismiss=False, border=(0, 0, 0, 0), separator_height=0)
         title = self.popup.children[0].children[2]
         self.popup.children[0].remove_widget(title)
@@ -837,11 +883,13 @@ class Kivy1010(GridLayout):
     def refresh_board(self):
         self.board.clear_widgets()
         pre_board = self.get_synced_board()
-        wh = min((330 * Window.width / 520), (330 * Window.height / 600))
+        # wh = get_ratio()
+        board_size = self.get_board_size()
+        self.per_box = (board_size - 3 * 9) / 10
         for i in range(0, 100):
             label = Label(
                 color=(0, 0, 0, 1), size_hint=(None, None),
-                size=(wh / 11, wh / 11))
+                size=(self.per_box, self.per_box))
             label.curve = self.curve
             color = pre_board.get(str(99 - i), self.labels)
             set_color(label, color)
@@ -869,7 +917,7 @@ class Kivy1010(GridLayout):
         per_shape_height = float(self.coming.height)
 
         for scatter in scatters:
-            scatter.calculate_shape_size()
+            scatter.calculate_shape_size(per_shape_width, per_shape_height)
             shape = None
             try:
                 pre_shape = shapes[scatters.index(scatter)]
@@ -904,7 +952,7 @@ class Kivy1010(GridLayout):
                 if index % shape.rows == 0:
                     width += scatter.wh_per + 1
                 shape.add_widget(box)
-            shape.spacing = (1, 1)
+            shape.spacing = (2, 2)
             scatter.size_hint = (None, None)
             scatter.size = (width, height)
 
@@ -927,34 +975,54 @@ class Kivy1010(GridLayout):
         DB.store_put('shapes', [])
         DB.store_sync()
 
+    def get_scoreboard_height(self):
+        return Window.height / 10
+
+    def get_board_size(self):
+        score_board_height = self.get_scoreboard_height()
+        return float(min(Window.width - 20,
+                         (Window.height - score_board_height) / 10 * 7))
+
+    def get_shapes_size(self):
+        score_board_height = self.get_scoreboard_height()
+        return (float(Window.height) -
+                float(self.board.height) -
+                score_board_height)
+
     def resize_all(self, width, height):
+        wh = get_ratio()
         try:
+            score_board_height = self.get_scoreboard_height()
             self.score_board.visual_score_label.size = (
-                width / 2 - 40, self.score_board.visual_score_label.size[1])
-            self.score_board.width = width - 40
+                (width - 50) / 2 - 15, score_board_height
+            )
+            self.score_board.width = width
+            # self.font_size = score_board_height
+            self.score_board.height = score_board_height
         except:
             pass
 
         try:
-            wh = min((330.0 * width / 520), (330.0 * height / 600))
             self.curve = wh * 9 / 330.0
-            padding = (width > wh) and (width - wh) / 2 - 20 or 0
-            self.board.width = self.board.height = wh + 10
+            board_size = self.get_board_size()
+            padding = (width - 20 > board_size) and (width - 20 - board_size) / 2 or 0
+            self.board.width = self.board.height = board_size
+            self.per_box = (board_size - 3 * 9) / 10
             for label in self.board.children:
-                label.width = label.height = wh / 11
+                label.width = label.height = self.per_box
                 label.curve = self.curve
-            self.board.padding = (padding, 10, padding, 10)
+            self.board.padding = (padding, 0, padding, 0)
+            self.padding = (10, 0, 10, 0)
         except:
             pass
 
         try:
             scatters = [self.comingLeft, self.comingMid, self.comingRight]
-            self.coming.height = (
-                float(height) - float(self.board.height) - 50.0)
+            self.coming.height = self.get_shapes_size()
             per_shape_width = float(width) / 3
-            per_shape_height = float(self.coming.height)
+            per_shape_height = min(per_shape_width, float(self.coming.height))
             for scatter in scatters:
-                scatter.calculate_shape_size()
+                scatter.calculate_shape_size(per_shape_width, per_shape_height)
                 floatlayout = scatter.children[0]
                 if floatlayout.children:
                     shape = floatlayout.children[0]
@@ -965,19 +1033,19 @@ class Kivy1010(GridLayout):
                         label.size = (scatter.wh_per, scatter.wh_per)
                         label.curve = self.curve
                         if index % shape.cols == 0:
-                            shape_height += scatter.wh_per + 1
+                            shape_height += scatter.wh_per + 2
 
                         if index % shape.rows == 0:
-                            shape_width += scatter.wh_per + 1
+                            shape_width += scatter.wh_per + 2
                         index += 1
+                    # shape_height = shape_width = scatter.wh_per * 5 + 12
                     index = scatters.index(scatter)
                     scatter.size_hint = (None, None)
                     scatter.size = (shape_width, shape_height)
                     scatter_pos_x = (
                         (per_shape_width * index) + (
                             (per_shape_width - scatter.size[0]) / 2))
-                    scatter_pos_y = max(
-                        0, (per_shape_height - scatter.size[1]) / 2)
+                    scatter_pos_y = (per_shape_height - scatter.size[1]) / 2
                     scatter.pos = (scatter_pos_x, scatter_pos_y)
                     scatter.pre_pos = scatter.pos
         except:
@@ -991,7 +1059,7 @@ class KivyMinesApp(App):
         super(KivyMinesApp, self).__init__(**kwargs)
         Builder.load_file('assets/1010.kv')
         self.title = 'Kivy 1010'
-        self.icon = 'assets/images/cube.png'
+        self.icon = 'assets/images/cubepng'
 
     def build(self):
         game = Kivy1010()
@@ -1007,7 +1075,7 @@ class KivyMinesApp(App):
     def resize(self, *args):
         """Handle sizes of all widget on resizing of window."""
         window, width, height = args
-        if width < 520 or height < 600:
+        if False and (width < 520 or height < 600):
             self.restore(window)
         else:
             try:
