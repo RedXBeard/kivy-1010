@@ -1,9 +1,9 @@
 import os
 from subprocess import Popen, PIPE
 
+from kivy import platform
 from kivy.storage.jsonstore import JsonStore
 from kivy.utils import get_color_from_hex
-from kivy import platform
 
 
 def run_syscall(cmd):
@@ -120,27 +120,27 @@ SHAPES = {
         dict(cols=2, rows=2, array=[1, 0, 1, 1]),
         dict(cols=2, rows=2, array=[1, 1, 1, 0]),
         dict(cols=2, rows=2, array=[0, 1, 1, 1])],
-    'mL': [
-        dict(cols=2, rows=3, array=[1, 0,
-                                    1, 0,
-                                    1, 1]),
-        dict(cols=2, rows=3, array=[1, 1,
-                                    1, 0,
-                                    1, 0]),
-        dict(cols=2, rows=3, array=[1, 1,
-                                    0, 1,
-                                    0, 1]),
-        dict(cols=2, rows=3, array=[0, 1,
-                                    0, 1,
-                                    1, 1]),
-        dict(cols=3, rows=2, array=[1, 1, 1,
-                                    1, 0, 0]),
-        dict(cols=3, rows=2, array=[1, 1, 1,
-                                    0, 0, 1]),
-        dict(cols=3, rows=2, array=[1, 0, 0,
-                                    1, 1, 1]),
-        dict(cols=3, rows=2, array=[0, 0, 1,
-                                    1, 1, 1])],
+    # 'mL': [
+    #     dict(cols=2, rows=3, array=[1, 0,
+    #                                 1, 0,
+    #                                 1, 1]),
+    #     dict(cols=2, rows=3, array=[1, 1,
+    #                                 1, 0,
+    #                                 1, 0]),
+    #     dict(cols=2, rows=3, array=[1, 1,
+    #                                 0, 1,
+    #                                 0, 1]),
+    #     dict(cols=2, rows=3, array=[0, 1,
+    #                                 0, 1,
+    #                                 1, 1]),
+    #     dict(cols=3, rows=2, array=[1, 1, 1,
+    #                                 1, 0, 0]),
+    #     dict(cols=3, rows=2, array=[1, 1, 1,
+    #                                 0, 0, 1]),
+    #     dict(cols=3, rows=2, array=[1, 0, 0,
+    #                                 1, 1, 1]),
+    #     dict(cols=3, rows=2, array=[0, 0, 1,
+    #                                 1, 1, 1])],
     'bL': [
         dict(cols=3, rows=3, array=[1, 1, 1,
                                     1, 0, 0,
@@ -154,11 +154,15 @@ SHAPES = {
         dict(cols=3, rows=3, array=[0, 0, 1,
                                     0, 0, 1,
                                     1, 1, 1])],
-    # 'fucked': [
-    #     dict(cols=6, rows=6, array=[1, 1, 1, 1, 1, 1,
-    #                                 1, 1, 1, 1, 1, 1,
-    #                                 1, 1, 1, 1, 1, 1,
-    #                                 1, 1, 1, 1, 1, 1,
-    #                                 1, 1, 1, 1, 1, 1,
-    #                                 1, 1, 1, 1, 1, 1])]
+    # 'zz': [
+    #     dict(cols=2, rows=3, array=[1, 0,
+    #                                 1, 1,
+    #                                 0, 1]),
+    #     dict(cols=2, rows=3, array=[0, 1,
+    #                                 1, 1,
+    #                                 1, 0]),
+    #     dict(cols=3, rows=2, array=[0, 1, 1,
+    #                                 1, 1, 0]),
+    #     dict(cols=3, rows=2, array=[1, 1, 0,
+    #                                 0, 1, 1])],
 }
