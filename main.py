@@ -37,8 +37,8 @@ SOUND = False
 
 
 def get_ratio():
-    return min((330 * float(Window.width) / 800),
-               (330 * float(Window.height) / 600))
+    return min(float(Window.width) / 800,
+               float(Window.height) / 600)
 
 
 def get_color(obj):
@@ -239,11 +239,22 @@ class CustomScatter(ScatterLayout):
 
     def on_touch_down(self, touch):
         super(CustomScatter, self).on_touch_down(touch)
+        root = self.parent.parent
         posx_check = self.pos[0] < touch.pos[0] < self.pos[0] + self.width
         posy_check = self.pos[1] < touch.pos[1] < self.pos[1] + self.height
-        if platform == 'android' and posx_check and posy_check:
+        if platform in ['android'] and posx_check and posy_check:
             anim = Animation(
                 x=self.pos[0], y=(touch.pos[1] + 250),
+                t='linear', duration=.1)
+            anim.start(self)
+        if platform in ['ios'] and posx_check and posy_check:
+            row_count = self.children[0].children[0].rows
+            anim = Animation(
+                x=self.pos[0], y=(touch.pos[1] +
+                                  (row_count > 1 and
+                                   row_count or
+                                   row_count + 1) *
+                                  (3 + root.per_box)),
                 t='linear', duration=.1)
             anim.start(self)
 
@@ -481,8 +492,8 @@ class Sound(object):
                 sound.priority = sound_info['priority']
                 setattr(self, sound_name, sound)
             self.sounds = self.get_sounds()
-        except:
-            pass
+        except AttributeError:
+            self.sounds = {}
 
     def get_sounds(self):
         keys = filter(lambda x: x.find('sound_') != -1, self.__dict__.keys())
@@ -499,24 +510,29 @@ class Sound(object):
         global SOUND
         sound_key = 'sound_' + sound_key
         if SOUND:
-            played_sounds = filter(
-                lambda x: x[1].state == 'play', self.sounds.items())
-            sound = getattr(self, sound_key)
-            sound_on = False
-            for sounds in played_sounds:
-                if (sounds[1].priority >= sound.priority or
-                            sounds[1].priority == 0):
-                    sounds[1].stop()
-                else:
-                    sound_on = True
-            if not sound_on:
-                sound.play()
+            try:
+                played_sounds = filter(
+                    lambda x: x[1].state == 'play', self.sounds.items())
+                sound = getattr(self, sound_key)
+                sound_on = False
+                for sounds in played_sounds:
+                    if (sounds[1].priority >= sound.priority or
+                                sounds[1].priority == 0):
+                        sounds[1].stop()
+                    else:
+                        sound_on = True
+                if not sound_on:
+                    sound.play()
+            except AttributeError:
+                pass
 
     def stop(self):
-        sounds = map(lambda x: x, self.sounds.values())
-        for sound in sounds:
-            sound.stop()
-
+        try:
+            sounds = map(lambda x: x, self.sounds.values())
+            for sound in sounds:
+                sound.stop()
+        except AttributeError:
+            pass
 
 def get_scoreboard_height():
     return Window.height / 10
@@ -524,7 +540,7 @@ def get_scoreboard_height():
 
 def get_board_size():
     score_board_height = get_scoreboard_height()
-    return float(min(Window.width - 20,
+    return float(min(Window.width - 80,
                      (Window.height - score_board_height) / 10 * 7))
 
 
@@ -666,12 +682,13 @@ class Kivy1010(GridLayout):
             if not label.filled:
                 set_color(label, color)
 
-    def get_pause_but(self):
+    def get_pause_but(self, disability=True):
         try:
             button = filter(
                 lambda x: str(x).find('Button') != -1,
                 self.score_board.children)[0]
-            button.disabled = not self.disabled
+            if disability:
+                button.disabled = not self.disabled
         except IndexError:
             button = None
         return button
@@ -1042,8 +1059,8 @@ class Kivy1010(GridLayout):
         try:
             score_board_height = get_scoreboard_height()
             self.score_board.visual_score_label.size = (
-                (width - 50) / 2 - 15, score_board_height
-            )
+                (width - 100.0) / 2,
+                 score_board_height)
             self.score_board.width = width
             # self.font_size = score_board_height
             self.score_board.height = score_board_height
@@ -1051,17 +1068,17 @@ class Kivy1010(GridLayout):
             pass
 
         try:
-            self.curve = wh * 9 / 330.0
             board_size = get_board_size()
-            padding = (width - 20 > board_size) and (
-                                                        width - 20 - board_size) / 2 or 0
+            padding = width > board_size and (width - board_size) / 2 or 40
             self.board.width = self.board.height = board_size
             self.per_box = (board_size - 3 * 9) / 10
+            self.curve = wh * self.per_box / 4
             for label in self.board.children:
                 label.width = label.height = self.per_box
                 label.curve = self.curve
-            self.board.padding = (padding, 0, padding, 0)
-            self.padding = (10, 0, 10, 0)
+            top_padding = (height - (board_size / 2 * 3) - score_board_height) / 3
+            self.board.padding = (padding, top_padding, padding, 0)
+            self.padding = (0, 0, 0, 0)
         except:
             pass
 
@@ -1114,8 +1131,18 @@ class KivyMinesApp(App):
         game = Kivy1010()
         Window.bind(on_resize=self.resize)
         Window.bind(on_close=self.save_board)
+        Window.bind(on_stop=self.save_board)
+        Window.bind(on_pause=self.save_board)
         game.resize_all(float(Window.width), float(Window.height))
         return game
+
+    def on_pause(self):
+        self.save_board()
+        return True
+
+    def on_stop(self):
+        self.save_board()
+        return True
 
     def restore(self, window):
         """Default window size handler.
@@ -1179,5 +1206,5 @@ class KivyMinesApp(App):
 
 if __name__ == '__main__':
     Config.set('kivy', 'desktop', 1)
-    Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
+    #Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
     KivyMinesApp().run()

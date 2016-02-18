@@ -60,7 +60,7 @@ Image:
 <Kivy1010>
     cols: 1
     rows: 3
-    padding: 20, 0, 20, 0
+    padding: 0, 0, 0, 0
     score_board: score_board
     board: board
     coming: coming
@@ -72,10 +72,11 @@ Image:
         id: score_board
         visual_score_label: visual_score_label
         high_score_label: high_score_label
+        award_img: award_img
         cols: 4
         rows: 1
         size_hint: None, None
-        spacing: 4, 4
+        spacing: 0, 0
         Label:
             id: visual_score_label
             text: '%s'%str(root.visual_score)
@@ -85,6 +86,7 @@ Image:
             text_size: self.width, None
             halign: 'right'
         Image:
+            id: award_img
             source: 'assets/images/award.png'
             size_hint: None, 1
             width: '50sp'
@@ -92,7 +94,6 @@ Image:
             id: high_score_label
             text: '%s'%str(root.high_score)
             color: get_color_from_hex('5BBEE5')
-            size_hint: 1, 1
             font_size: '50sp'# max(root.width, root.height) / 30
             text_size: self.width, None
             halign: 'left'

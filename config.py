@@ -4,6 +4,7 @@ from subprocess import Popen, PIPE
 from kivy import platform
 from kivy.storage.jsonstore import JsonStore
 from kivy.utils import get_color_from_hex
+from kivy import kivy_home_dir
 
 
 def run_syscall(cmd):
@@ -18,7 +19,7 @@ def run_syscall(cmd):
 if platform in ['linux', 'macosx']:
     PATH_SEPERATOR = '/'
     cmd = "echo $HOME"
-elif platform == 'android':
+elif platform in ['android', 'ios']:
     PATH_SEPERATOR = '/'
     cmd = ""
 else:
@@ -32,7 +33,7 @@ if cmd:
     REPOFILE = "%(out)s%(ps)s.kivy-1010%(ps)skivy1010" % {
         'out': out.rstrip(), 'ps': PATH_SEPERATOR}
 else:
-    REPOFILE = os.path.join(PROJECT_PATH, "kivy1010")
+    REPOFILE = os.path.join(kivy_home_dir, "kivy1010")
 
 DB = JsonStore(REPOFILE)
 directory = os.path.dirname(REPOFILE)
@@ -61,15 +62,15 @@ THEME = {'dark': {'background': get_color_from_hex('303030'),
 
 SOUNDS = {
     'placed': {
-        'path': 'assets/sounds/placed.mp3', 'volume': .8, 'priority': 2},
+        'path': 'assets/sounds/placed.wav', 'volume': .8, 'priority': 2},
     'missed_placed': {
-        'path': 'assets/sounds/missed_placed.mp3', 'volume': .4, 'priority': 4},
+        'path': 'assets/sounds/missed_placed.wav', 'volume': .4, 'priority': 4},
     'line_clear': {
-        'path': 'assets/sounds/line_clear.mp3', 'volume': .2, 'priority': 1},
+        'path': 'assets/sounds/line_clear.wav', 'volume': .2, 'priority': 1},
     'new_shapes': {
-        'path': 'assets/sounds/new_shapes.mp3', 'volume': .5, 'priority': 3},
+        'path': 'assets/sounds/new_shapes.wav', 'volume': .5, 'priority': 3},
     'game_on': {
-        'path': 'assets/sounds/game_on.mp3', 'volume': 0, 'priority': 0}}
+        'path': 'assets/sounds/game_on.wav', 'volume': 0, 'priority': 0}}
 
 COLOR = [
     get_color_from_hex('DC6555'),  # red
