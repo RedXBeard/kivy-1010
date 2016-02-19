@@ -141,7 +141,6 @@ def free_positions(board, shape):
     """
     pos_on_board = board.children
     place = False
-    shape_box_on_board = []
     all_positions = []
     for pos in pos_on_board:
         label_index = board.children.index(pos)
@@ -385,13 +384,15 @@ class CustomScatter(ScatterLayout):
             best_place = CustomScatter.find_best_place(board, free_place)
             board.parent.free_place = best_place
 
-    def clear_lines(self, lines, score_update=True, shape_labels=[]):
+    def clear_lines(self, lines, score_update=True, shape_labels=None):
         """
         clear lines on rows and cols, first collect indexes then get points
         :param shape_labels:
         :param score_update:
         :param lines:
         """
+        if shape_labels is None:
+            shape_labels = []
         board = self.parent.parent.board
         all_labels = []
         all_colored_labels = []
@@ -517,7 +518,7 @@ class Sound(object):
                 sound_on = False
                 for sounds in played_sounds:
                     if (sounds[1].priority >= sound.priority or
-                                sounds[1].priority == 0):
+                            sounds[1].priority == 0):
                         sounds[1].stop()
                     else:
                         sound_on = True
@@ -534,6 +535,7 @@ class Sound(object):
         except AttributeError:
             pass
 
+
 def get_scoreboard_height():
     return Window.height / 10
 
@@ -548,7 +550,7 @@ def open_page(*args):
     webbrowser.open(args[1])
 
 
-def generate_play_button(*args):
+def generate_play_button():
     button = Button(background_color=get_color_from_hex('58CB85'))
     button.curve = 25
     button.image.source = 'assets/images/play.png'
@@ -556,7 +558,7 @@ def generate_play_button(*args):
     return button
 
 
-def generate_medal_label(*args):
+def generate_medal_label():
     """
     :return: Label
     """
@@ -566,6 +568,34 @@ def generate_medal_label(*args):
     label.image.size = ('50sp', '50sp')
     set_color(label, get_color_from_hex('5BBEE5'))
     return label
+
+
+def sync_score(score):
+    DB.store_put('score', score)
+    DB.store_sync()
+
+
+def sync_board(board):
+    DB.store_put('board', board)
+    DB.store_sync()
+
+
+def get_synced_board():
+    board = DB.store_get('board')
+    return board
+
+
+def get_synced_shapes():
+    shapes = DB.store_get('shapes')
+    return shapes
+
+
+def get_record():
+    try:
+        high_score = DB.store_get('high_score')
+    except KeyError:
+        high_score = 0
+    return high_score
 
 
 class Kivy1010(GridLayout):
@@ -591,7 +621,7 @@ class Kivy1010(GridLayout):
         SOUND = DB.store_get('sound')
         self.set_theme()
         self.sound = Sound()
-        self.high_score = self.get_record()
+        self.high_score = get_record()
         self.popup = None
         self.go()
         # Clock.schedule_once(lambda x: self.check_update(), 5)
@@ -601,22 +631,6 @@ class Kivy1010(GridLayout):
     def set_score(self):
         self.score = DB.store_get('score')
 
-    def sync_score(self, score):
-        DB.store_put('score', score)
-        DB.store_sync()
-
-    def sync_board(self, board):
-        DB.store_put('board', board)
-        DB.store_sync()
-
-    def get_synced_board(self):
-        board = DB.store_get('board')
-        return board
-
-    def get_synced_shapes(self):
-        shapes = DB.store_get('shapes')
-        return shapes
-
     def clear_free_place(self):
         for place in self.free_place:
             position = self.board.children[place]
@@ -624,7 +638,7 @@ class Kivy1010(GridLayout):
             Animation.cancel_all(color, 'rgba')
             set_color(position, self.labels)
 
-    def lightup(self, *args):
+    def lightup(self):
         """to light up free space"""
         labels = []
         for index in self.free_place:
@@ -647,9 +661,9 @@ class Kivy1010(GridLayout):
 
     def movement_detect(self):
         """Calculate last movement on board."""
-        if self.free_place and (
-                        datetime.now() - self.last_moved > timedelta(
-                    seconds=5)):
+        if (self.free_place and
+                (datetime.now() -
+                 self.last_moved > timedelta(seconds=5))):
             self.lightup()
         Clock.schedule_once(lambda dt: self.movement_detect(), 1)
 
@@ -658,12 +672,12 @@ class Kivy1010(GridLayout):
         self.set_theme(theme=theme)
         self.keep_on()
 
-    def change_theme(self, *args):
+    def change_theme(self):
         theme = filter(lambda x: x != self.theme, THEME.keys())[0]
         self.set_theme(theme=theme)
         self.go()
 
-    def set_theme(self, theme=None, *args):
+    def set_theme(self, theme=None):
         if not theme:
             theme = DB.store_get('theme')
         self.theme = theme
@@ -724,13 +738,13 @@ class Kivy1010(GridLayout):
             try:
                 button = args[0]
                 if button.image.source == 'assets/images/refresh.png':
-                    self.sync_score(0)
-                    self.sync_board({})
+                    sync_score(0)
+                    sync_board({})
             except IndexError:
                 pass
             self.sound.play('game_on')
             self.create_pause_but()
-            self.high_score = self.get_record()
+            self.high_score = get_record()
             self.set_score()
             self.visual_score = 0
             if self.popup:
@@ -745,7 +759,7 @@ class Kivy1010(GridLayout):
     def keep_on(self, *args):
         try:
             self.create_pause_but()
-            self.high_score = self.get_record()
+            self.high_score = get_record()
             self.popup.dismiss()
             self.popup = None
         except AttributeError:
@@ -762,7 +776,7 @@ class Kivy1010(GridLayout):
         if not SOUND:
             self.sound.stop()
 
-    def check_update(self, *args):
+    def check_update(self):
         release_link = "https://github.com/RedXBeard/kivy-1010/releases/latest"
         try:
             resp = urlopen(release_link)
@@ -790,7 +804,7 @@ class Kivy1010(GridLayout):
         except URLError:
             pass
 
-    def generate_restart_button(self, *args):
+    def generate_restart_button(self):
         """
         :return: Button
         """
@@ -801,7 +815,7 @@ class Kivy1010(GridLayout):
         restart.bind(on_press=self.go)
         return restart
 
-    def generate_theme_button(self, *args):
+    def generate_theme_button(self):
         """
         :return: Button
         """
@@ -813,7 +827,7 @@ class Kivy1010(GridLayout):
         theme.image.source = image_source
         return theme
 
-    def generate_sound_button(self, *args):
+    def generate_sound_button(self):
         """
         :return: Button
         """
@@ -826,7 +840,7 @@ class Kivy1010(GridLayout):
         sound.bind(on_press=self.change_sound)
         return sound
 
-    def generate_score_label(self, **kwargs):
+    def generate_score_label(self):
         """
         :param kwargs:
         :return: Label
@@ -869,7 +883,9 @@ class Kivy1010(GridLayout):
             layout.add_widget(play_restart_box)
 
         else:
+            theme = self.generate_theme_button()
             layout.add_widget(button)
+            layout.add_widget(theme)
             button.bind(on_press=self.go)
             theme.bind(on_press=self.change_theme)
 
@@ -933,8 +949,8 @@ class Kivy1010(GridLayout):
         title = self.popup.children[0].children[2]
         self.popup.children[0].remove_widget(title)
         self.popup.open()
-        self.sync_score(0)
-        self.sync_board({})
+        sync_score(0)
+        sync_board({})
 
     def set_record(self):
         try:
@@ -946,16 +962,9 @@ class Kivy1010(GridLayout):
             DB.store_put('high_score', self.score)
         DB.store_sync()
 
-    def get_record(self):
-        try:
-            high_score = DB.store_get('high_score')
-        except KeyError:
-            high_score = 0
-        return high_score
-
     def refresh_board(self):
         self.board.clear_widgets()
-        pre_board = self.get_synced_board()
+        pre_board = get_synced_board()
         # wh = get_ratio()
         board_size = get_board_size()
         self.per_box = (board_size - 3 * 9) / 10
@@ -979,7 +988,7 @@ class Kivy1010(GridLayout):
         return result
 
     def coming_shapes(self):
-        shapes = self.get_synced_shapes()
+        shapes = get_synced_shapes()
         scatters = [self.comingLeft, self.comingMid, self.comingRight]
         for scatter in scatters:
             scatter.clear_widgets()
@@ -1027,6 +1036,8 @@ class Kivy1010(GridLayout):
                 shape.add_widget(box)
             shape.spacing = (2, 2)
             scatter.size_hint = (None, None)
+            # width = max(width, (scatter.wh_per + 2) * 2)
+            # height = max(height, (scatter.wh_per + 2) * 2)
             scatter.size = (width, height)
 
             index = scatters.index(scatter)
@@ -1059,8 +1070,7 @@ class Kivy1010(GridLayout):
         try:
             score_board_height = get_scoreboard_height()
             self.score_board.visual_score_label.size = (
-                (width - 100.0) / 2,
-                 score_board_height)
+                (width - 100.0) / 2, score_board_height)
             self.score_board.width = width
             # self.font_size = score_board_height
             self.score_board.height = score_board_height
@@ -1104,7 +1114,8 @@ class Kivy1010(GridLayout):
                         if index % shape.rows == 0:
                             shape_width += scatter.wh_per + 2
                         index += 1
-                    # shape_height = shape_width = scatter.wh_per * 5 + 12
+                    # shape_width = max(shape_width, (scatter.wh_per + 2) * 2)
+                    # shape_height = max(shape_height, (scatter.wh_per + 2) * 2)
                     index = scatters.index(scatter)
                     scatter.size_hint = (None, None)
                     scatter.size = (shape_width, shape_height)
@@ -1125,7 +1136,7 @@ class KivyMinesApp(App):
         super(KivyMinesApp, self).__init__(**kwargs)
         Builder.load_file('assets/1010.kv')
         self.title = 'Kivy 1010'
-        self.icon = 'assets/images/cubepng'
+        self.icon = 'assets/images/cube.png'
 
     def build(self):
         game = Kivy1010()
@@ -1166,9 +1177,9 @@ class KivyMinesApp(App):
 
     def save_board(self, *args):
         """On exit keep last session"""
-        window, = args
-        root = window.children[0]
         try:
+            window, = args
+            root = window.children[0]
             board = root.board.children
             board_visual = {}
             if board:
@@ -1181,7 +1192,7 @@ class KivyMinesApp(App):
             DB.store_put('board', board_visual)
             DB.store_put('score', root.score)
             DB.store_sync()
-        except AttributeError:
+        except (ValueError, AttributeError):
             pass
 
         try:
@@ -1200,11 +1211,11 @@ class KivyMinesApp(App):
                     pass
             DB.store_put('shapes', shapes)
             DB.store_sync()
-        except AttributeError:
+        except (UnboundLocalError, AttributeError):
             pass
 
 
 if __name__ == '__main__':
     Config.set('kivy', 'desktop', 1)
-    #Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
+    # Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
     KivyMinesApp().run()
