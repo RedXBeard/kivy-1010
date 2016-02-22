@@ -37,6 +37,7 @@ SOUND = False
 
 
 def get_ratio():
+    return Window.width < Window.height and float(Window.width) / float(Window.height) or float(Window.height) / float(Window.width)
     return min(float(Window.width) / 800,
                float(Window.height) / 600)
 
@@ -208,6 +209,7 @@ class CustomScatter(ScatterLayout):
         root = self.parent.parent
         root.last_moved = datetime.now()
         root.clear_free_place()
+        wh = get_ratio()
         try:
             if self.do_translation_x and self.do_translation_y:
                 shape = self.children[0].children[0]
@@ -219,6 +221,7 @@ class CustomScatter(ScatterLayout):
                             (root.per_box - 5))) / len(shape.children)
                 for label in shape.children:
                     label.size = (root.per_box - 5, root.per_box - 5)
+                    label.curve = label.size[0] * wh / 3
                 shape.spacing = (per_box, per_box)
                 shape.resize()
                 resized_height = shape.rows * shape.children[0].size[
@@ -259,10 +262,12 @@ class CustomScatter(ScatterLayout):
 
     def reset_shape(self):
         try:
+            wh = get_ratio()
             if self.do_translation_x and self.do_translation_y:
                 shape = self.children[0].children[0]
                 for label in shape.children:
                     label.size = (self.wh_per, self.wh_per)
+                    label.curve = self.wh_per * wh / 3
                 shape.spacing = (2, 2)
                 shape.resize()
                 self.touch_distance = 0
@@ -1021,7 +1026,7 @@ class Kivy1010(GridLayout):
                     box = Label(
                         size_hint=(None, None),
                         size=(scatter.wh_per, scatter.wh_per))
-                    box.curve = scatter.wh_per * wh / 4
+                    box.curve = scatter.wh_per * wh / 3
                     set_color(box, self.background)
                 else:
                     box = Image(
@@ -1083,7 +1088,7 @@ class Kivy1010(GridLayout):
             padding = width > board_size and (width - board_size) / 2 or 40
             self.board.width = self.board.height = board_size
             self.per_box = (board_size - 3 * 9) / 10
-            self.curve = wh * self.per_box / 4
+            self.curve = wh * self.per_box / 3
             for label in self.board.children:
                 label.width = label.height = self.per_box
                 label.curve = self.curve
@@ -1108,7 +1113,7 @@ class Kivy1010(GridLayout):
                     index = 0
                     for label in shape.children:
                         label.size = (scatter.wh_per, scatter.wh_per)
-                        label.curve = scatter.wh_per * wh / 4
+                        label.curve = scatter.wh_per * wh / 3
                         if index % shape.cols == 0:
                             shape_height += scatter.wh_per + 2
 
