@@ -706,14 +706,25 @@ class Kivy1010(GridLayout):
             button = filter(
                 lambda x: str(x).find('Button') != -1,
                 self.score_board.children)[0]
-            if disability:
-                button.disabled = not self.disabled
         except IndexError:
             button = None
         return button
 
+    def pause_change_disability(self, attr=None):
+        button = self.get_pause_but()
+        try:
+            button.disabled = attr if attr is not None else not self.disabled
+            if button.disabled:
+                button.image.source = 'assets/images/trans.png'
+            else:
+                button.image.source = 'assets/images/pause_%s.png' % (
+                    self.theme == 'dark' and 'dark' or 'sun')
+        except AttributeError:
+            pass
+
     def create_pause_but(self):
-        if not self.get_pause_but():
+        button = self.get_pause_but()
+        if not button:
             button = Button(background_color=get_color_from_hex('E2DDD5'),
                             size_hint=(None, None), disabled=False)
             button.bind(on_press=self.create_on_start_popup)
@@ -721,23 +732,20 @@ class Kivy1010(GridLayout):
                 self.theme == 'dark' and 'dark' or 'sun')
             button.image.size = (self.score_board.height / 3,
                                  self.score_board.height / 3)
-            button.width, button.height = button.image.size
+            button.width, button.height = (button.image.size[0] * 2,
+                                           button.image.size[1])
             set_color(button, self.background)
             self.score_board.cols = 4
             self.score_board.add_widget(button)
-
-    def pause_change_disability(self):
-        button = self.get_pause_but()
-        try:
-            button.disabled = not self.disabled
-        except AttributeError:
-            pass
+        else:
+            self.pause_change_disability(attr=False)
 
     def remove_pause_but(self):
         button = self.get_pause_but()
         if button:
-            self.score_board.remove_widget(button)
-            self.score_board.cols = 3
+            self.pause_change_disability(attr=True)
+            # self.score_board.remove_widget(button)
+            # self.score_board.cols = 3
 
     def clear_lines(self, indexes):
         self.coming.children[0].clear_lines(indexes, score_update=False)
