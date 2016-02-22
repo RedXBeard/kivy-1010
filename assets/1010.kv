@@ -51,8 +51,6 @@
         id: image
         source: 'assets/images/trans.png'
         pos: self.parent.pos[0]+self.parent.width/2-self.width/2, self.parent.pos[1]+self.parent.height/2-self.height/2
-        size: map(lambda x: x/2, self.parent.size)
-        on_size: self.size=map(lambda x: x/2, self.parent.size)
 
 Image:
     filled: False
@@ -82,19 +80,19 @@ Image:
             text: '%s'%str(root.visual_score)
             color: get_color_from_hex('58CB85')
             size_hint: None, 1
-            font_size: '50sp'
+            font_size: self.height
             text_size: self.width, None
             halign: 'right'
         Image:
             id: award_img
             source: 'assets/images/award.png'
             size_hint: None, 1
-            width: '50sp'
+            width: self.height
         Label:
             id: high_score_label
             text: '%s'%str(root.high_score)
             color: get_color_from_hex('5BBEE5')
-            font_size: '50sp'# max(root.width, root.height) / 30
+            font_size: self.height
             text_size: self.width, None
             halign: 'left'
 

@@ -715,12 +715,15 @@ class Kivy1010(GridLayout):
     def create_pause_but(self):
         if not self.get_pause_but():
             button = Button(background_color=get_color_from_hex('E2DDD5'),
-                            size_hint=(None, 1), width=100, disabled=False)
+                            size_hint=(None, None), disabled=False)
             button.bind(on_press=self.create_on_start_popup)
             button.image.source = 'assets/images/pause_%s.png' % (
                 self.theme == 'dark' and 'dark' or 'sun')
-            button.image.size = ("5in", "5in")
+            button.image.size = (self.score_board.height / 3,
+                                 self.score_board.height / 3)
+            button.width, button.height = button.image.size
             set_color(button, self.background)
+            self.score_board.cols = 4
             self.score_board.add_widget(button)
 
     def pause_change_disability(self):
@@ -734,6 +737,7 @@ class Kivy1010(GridLayout):
         button = self.get_pause_but()
         if button:
             self.score_board.remove_widget(button)
+            self.score_board.cols = 3
 
     def clear_lines(self, indexes):
         self.coming.children[0].clear_lines(indexes, score_update=False)
@@ -853,8 +857,8 @@ class Kivy1010(GridLayout):
         score = self.score
         label = Label(
             text=str(score),
-            color=get_color_from_hex('E2DDD5'),
-            font_size="75sp")
+            color=get_color_from_hex('E2DDD5'))
+        label.font_size = label.height / 3 * 2
         label.curve = 25
         set_color(label, get_color_from_hex('5BBEE5'))
         return label
@@ -902,9 +906,11 @@ class Kivy1010(GridLayout):
         layout.add_widget(sound_theme_box)
 
         self.popup = Popup(
-            content=layout, size_hint=(None, None), size=('300sp', '500sp'),
+            content=layout, size_hint=(None, None),
+            size=(Window.width / 3 * 2, Window.height / 3 * 2),
             title_color=(0, 0, 0, 1), auto_dismiss=False, border=(0, 0, 0, 0),
             separator_height=0)
+
         title = self.popup.children[0].children[2]
         self.popup.children[0].remove_widget(title)
         self.popup.open()
@@ -949,8 +955,10 @@ class Kivy1010(GridLayout):
         layout.add_widget(sound_theme_box)
 
         self.popup = Popup(
-            content=layout, size_hint=(None, None), size=('300sp', '500sp'),
+            content=layout, size_hint=(None, None),
+            size=(Window.width / 3 * 2, Window.height / 3 * 2),
             auto_dismiss=False, border=(0, 0, 0, 0), separator_height=0)
+
         title = self.popup.children[0].children[2]
         self.popup.children[0].remove_widget(title)
         self.popup.open()
@@ -1042,8 +1050,6 @@ class Kivy1010(GridLayout):
                 shape.add_widget(box)
             shape.spacing = (2, 2)
             scatter.size_hint = (None, None)
-            # width = max(width, (scatter.wh_per + 2) * 2)
-            # height = max(height, (scatter.wh_per + 2) * 2)
             scatter.size = (width, height)
 
             index = scatters.index(scatter)
@@ -1076,9 +1082,8 @@ class Kivy1010(GridLayout):
         try:
             score_board_height = get_scoreboard_height()
             self.score_board.visual_score_label.size = (
-                (width - 100.0) / 2, score_board_height)
+                (width / 2) - (self.score_board.award_img.width / 4), score_board_height)
             self.score_board.width = width
-            # self.font_size = score_board_height
             self.score_board.height = score_board_height
         except:
             pass
