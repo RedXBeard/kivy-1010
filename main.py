@@ -988,6 +988,7 @@ class Kivy1010(GridLayout):
         return result
 
     def coming_shapes(self):
+        wh = get_ratio()
         shapes = get_synced_shapes()
         scatters = [self.comingLeft, self.comingMid, self.comingRight]
         for scatter in scatters:
@@ -1020,7 +1021,7 @@ class Kivy1010(GridLayout):
                     box = Label(
                         size_hint=(None, None),
                         size=(scatter.wh_per, scatter.wh_per))
-                    box.curve = self.curve
+                    box.curve = scatter.wh_per * wh / 4
                     set_color(box, self.background)
                 else:
                     box = Image(
@@ -1107,7 +1108,7 @@ class Kivy1010(GridLayout):
                     index = 0
                     for label in shape.children:
                         label.size = (scatter.wh_per, scatter.wh_per)
-                        label.curve = self.curve
+                        label.curve = scatter.wh_per * wh / 4
                         if index % shape.cols == 0:
                             shape_height += scatter.wh_per + 2
 
