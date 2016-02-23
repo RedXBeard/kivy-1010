@@ -37,9 +37,9 @@ SOUND = False
 
 
 def get_ratio():
-    return Window.width < Window.height and float(Window.width) / float(Window.height) or float(Window.height) / float(Window.width)
-    return min(float(Window.width) / 800,
-               float(Window.height) / 600)
+    return (Window.width < Window.height and
+            float(Window.width) / float(Window.height) or
+            float(Window.height) / float(Window.width))
 
 
 def get_color(obj):
@@ -693,6 +693,9 @@ class Kivy1010(GridLayout):
         set_color(self.score_board.visual_score_label, self.background)
         set_color(self.score_board.high_score_label, self.background)
         Window.clearcolor = self.background
+        pause_but = self.get_pause_but()
+        if pause_but:
+            set_color(pause_but, self.background)
         DB.store_put('theme', theme)
         DB.store_sync()
 
