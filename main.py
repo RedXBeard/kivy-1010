@@ -733,8 +733,8 @@ class Kivy1010(GridLayout):
             button.bind(on_press=self.create_on_start_popup)
             button.image.source = 'assets/images/pause_%s.png' % (
                 self.theme == 'dark' and 'dark' or 'sun')
-            button.image.size = (self.score_board.height / 3,
-                                 self.score_board.height / 3)
+            button.image.size = (self.score_board.height / 2,
+                                 self.score_board.height / 2)
             button.width, button.height = (button.image.size[0] * 2,
                                            button.image.size[1])
             set_color(button, self.background)
@@ -1093,7 +1093,7 @@ class Kivy1010(GridLayout):
         try:
             score_board_height = get_scoreboard_height()
             self.score_board.visual_score_label.size = (
-                (width / 2) - (self.score_board.award_img.width / 4), score_board_height)
+                (width / 2) - (self.score_board.award_img.width / 2), score_board_height)
             self.score_board.width = width
             self.score_board.height = score_board_height
         except:
