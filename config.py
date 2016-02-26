@@ -4,7 +4,7 @@ from subprocess import Popen, PIPE
 from kivy import platform
 from kivy.storage.jsonstore import JsonStore
 from kivy.utils import get_color_from_hex
-from kivy import kivy_home_dir
+from kivy import user_home_dir
 
 
 def run_syscall(cmd):
@@ -33,7 +33,7 @@ if cmd:
     REPOFILE = "%(out)s%(ps)s.kivy-1010%(ps)skivy1010" % {
         'out': out.rstrip(), 'ps': PATH_SEPERATOR}
 else:
-    REPOFILE = os.path.join(kivy_home_dir, "kivy1010")
+    REPOFILE = os.path.join(user_home_dir, "kivy1010")
 
 DB = JsonStore(REPOFILE)
 directory = os.path.dirname(REPOFILE)

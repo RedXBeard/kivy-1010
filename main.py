@@ -224,8 +224,9 @@ class CustomScatter(ScatterLayout):
                     label.curve = label.size[0] * wh / 3
                 shape.spacing = (per_box, per_box)
                 shape.resize()
-                resized_height = shape.rows * shape.children[0].size[
-                    0] + shape.rows * shape.spacing[0]
+                resized_height = (shape.rows * shape.children[0].size[0] +
+                                  shape.rows * shape.spacing[0])
+
                 if not self.touch_distance:
                     self.touch_distance = resized_height - orig_height
         except IndexError:
@@ -1057,7 +1058,6 @@ class Kivy1010(GridLayout):
             shape.spacing = (2, 2)
             scatter.size_hint = (None, None)
             scatter.size = (width, height)
-
             index = scatters.index(scatter)
             scatter_pos_x = (
                                 per_shape_width * index) + (
@@ -1118,7 +1118,7 @@ class Kivy1010(GridLayout):
             scatters = [self.comingLeft, self.comingMid, self.comingRight]
             self.coming.height = self.get_shapes_size()
             per_shape_width = float(width) / 3
-            per_shape_height = min(per_shape_width, float(self.coming.height))
+            per_shape_height = float(self.coming.height)
             for scatter in scatters:
                 scatter.calculate_shape_size(per_shape_width, per_shape_height)
                 floatlayout = scatter.children[0]
@@ -1130,14 +1130,12 @@ class Kivy1010(GridLayout):
                     for label in shape.children:
                         label.size = (scatter.wh_per, scatter.wh_per)
                         label.curve = scatter.wh_per * wh / 3
+                        index += 1
                         if index % shape.cols == 0:
                             shape_height += scatter.wh_per + 2
 
                         if index % shape.rows == 0:
                             shape_width += scatter.wh_per + 2
-                        index += 1
-                    # shape_width = max(shape_width, (scatter.wh_per + 2) * 2)
-                    # shape_height = max(shape_height, (scatter.wh_per + 2) * 2)
                     index = scatters.index(scatter)
                     scatter.size_hint = (None, None)
                     scatter.size = (shape_width, shape_height)
