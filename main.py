@@ -22,7 +22,7 @@ from kivy.utils import get_color_from_hex
 
 from config import DB, THEME, COLOR, SHAPES, SOUNDS, WIN_SIZE
 
-__version__ = '1.5.0'
+__version__ = '1.5.2'
 
 # SCORE calculation
 """
@@ -677,7 +677,7 @@ class Kivy1010(GridLayout):
         self.set_theme(theme=theme)
         self.keep_on()
 
-    def change_theme(self):
+    def change_theme(self, *args, **kwargs):
         theme = filter(lambda x: x != self.theme, THEME.keys())[0]
         self.set_theme(theme=theme)
         self.go()
@@ -731,17 +731,12 @@ class Kivy1010(GridLayout):
             button = Button(background_color=get_color_from_hex('E2DDD5'),
                             size_hint=(None, None), disabled=False)
             button.bind(on_press=self.create_on_start_popup)
-            button.image.source = 'assets/images/pause_%s.png' % (
-                self.theme == 'dark' and 'dark' or 'sun')
-            button.image.size = (self.score_board.height / 2,
-                                 self.score_board.height / 2)
-            button.width, button.height = (button.image.size[0] * 2,
-                                           button.image.size[1])
-            set_color(button, self.background)
-            self.score_board.cols = 4
-            self.score_board.add_widget(button)
         else:
             self.pause_change_disability(attr=False)
+        button.bind(on_press=self.create_on_start_popup)
+        button.image.source = 'assets/images/pause_%s.png' % (
+            self.theme == 'dark' and 'dark' or 'sun')
+        set_color(button, self.background)
 
     def remove_pause_but(self):
         button = self.get_pause_but()
@@ -1092,10 +1087,15 @@ class Kivy1010(GridLayout):
         wh = get_ratio()
         try:
             score_board_height = get_scoreboard_height()
-            self.score_board.visual_score_label.size = (
+            (self.score_board.visual_score_label.width,
+             self.score_board.visual_score_label.height) = (
                 (width / 2) - (self.score_board.award_img.width / 2), score_board_height)
             self.score_board.width = width
-            self.score_board.height = score_board_height
+            self.score_board.height = score_board_height + 30
+            button = self.get_pause_but()
+            button.image.size = (self.score_board.height / 4,
+                                 self.score_board.height)
+            button.width = self.score_board.height / 2
         except:
             pass
 

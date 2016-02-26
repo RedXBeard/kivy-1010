@@ -79,22 +79,25 @@ Image:
             id: visual_score_label
             text: '%s'%str(root.visual_score)
             color: get_color_from_hex('58CB85')
-            size_hint: None, 1
-            font_size: self.height
+            size_hint: None, None
+            font_size: self.height / 2
             text_size: self.width, None
             halign: 'right'
         Image:
             id: award_img
             source: 'assets/images/award.png'
             size_hint: None, 1
-            width: self.height
+            width: self.height / 2
         Label:
             id: high_score_label
             text: '%s'%str(root.high_score)
             color: get_color_from_hex('5BBEE5')
-            font_size: self.height
+            font_size: self.height / 2
             text_size: self.width, None
             halign: 'left'
+        Button:
+            id: pause_but
+            size_hint: None, 1
 
     GridLayout:
         id: board
