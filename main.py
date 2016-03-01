@@ -249,11 +249,7 @@ class CustomScatter(ScatterLayout):
         root = self.parent.parent
         posx_check = self.pos[0] < touch.pos[0] < self.pos[0] + self.width
         posy_check = self.pos[1] < touch.pos[1] < self.pos[1] + self.height
-        if platform in ['android'] and posx_check and posy_check:
-            Animation(
-                x=self.pos[0], y=(touch.pos[1] + 250),
-                t='linear', duration=.1).start(self)
-        if platform in ['ios'] and posx_check and posy_check:
+        if platform in ['android', 'ios'] and posx_check and posy_check:
             row_count = self.children[0].children[0].rows
             Animation(
                 x=self.pos[0], y=(touch.pos[1] +
@@ -261,7 +257,7 @@ class CustomScatter(ScatterLayout):
                                    row_count or
                                    row_count + 1) *
                                   (3 + root.per_box)),
-                t='linear', duration=.1).start(self)
+                t='linear', duration=.05).start(self)
 
     def reset_shape(self):
         try:
@@ -1085,7 +1081,9 @@ class Kivy1010(GridLayout):
                            width, height, index)
 
             self.last_moved = datetime.now()
-
+            # s_x, s_y = scatter.size
+            # s_posx, s_posy = scatter.pos
+            # shape.pos = ((s_x / 2) - (width / 2)), -20
             scatter.add_widget(shape)
             label_colors = shape.get_colors()
             scatter.do_translation_y = True
@@ -1093,6 +1091,7 @@ class Kivy1010(GridLayout):
             for color in label_colors:
                 anim = Animation(rgba=shape.color, d=.2, t='in_circ')
                 anim.start(color)
+
         DB.store_put('shapes', [])
         DB.store_sync()
 
