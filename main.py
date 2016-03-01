@@ -169,6 +169,7 @@ class Shape(GridLayout):
             color=None, color_set=COLOR):
         super(Shape, self).__init__()
         shape_key = choice(SHAPES.keys())
+        # shape_key = "straight1"
         shape = choice(SHAPES[shape_key])
         # shape = SHAPES[shape_key][1]
         ccolor = choice(color_set)
@@ -199,6 +200,7 @@ class CustomScatter(ScatterLayout):
     wh_per = 25
     last_moved = None
     touch_distance = 0
+    min_size = 0
 
     def on_transform_with_touch(self, touch):
         """take action when shape touched.
@@ -215,6 +217,7 @@ class CustomScatter(ScatterLayout):
                 shape = self.children[0].children[0]
                 orig_height = (shape.rows * shape.children[0].size[0] +
                                shape.rows * shape.spacing[0])
+                dust_height = orig_height - self.min_size if shape.rows < 5 else 0
                 per_box = (((len(shape.children) * root.per_box) +
                             (len(shape.children) * 3)) -
                            (len(shape.children) *
@@ -228,7 +231,8 @@ class CustomScatter(ScatterLayout):
                                   shape.rows * shape.spacing[0])
 
                 if not self.touch_distance:
-                    self.touch_distance = resized_height - orig_height
+                    self.touch_distance = resized_height - orig_height + dust_height
+
         except IndexError:
             pass
 
@@ -246,20 +250,18 @@ class CustomScatter(ScatterLayout):
         posx_check = self.pos[0] < touch.pos[0] < self.pos[0] + self.width
         posy_check = self.pos[1] < touch.pos[1] < self.pos[1] + self.height
         if platform in ['android'] and posx_check and posy_check:
-            anim = Animation(
+            Animation(
                 x=self.pos[0], y=(touch.pos[1] + 250),
-                t='linear', duration=.1)
-            anim.start(self)
+                t='linear', duration=.1).start(self)
         if platform in ['ios'] and posx_check and posy_check:
             row_count = self.children[0].children[0].rows
-            anim = Animation(
+            Animation(
                 x=self.pos[0], y=(touch.pos[1] +
                                   (row_count > 1 and
                                    row_count or
                                    row_count + 1) *
                                   (3 + root.per_box)),
-                t='linear', duration=.1)
-            anim.start(self)
+                t='linear', duration=.1).start(self)
 
     def reset_shape(self):
         try:
@@ -277,6 +279,8 @@ class CustomScatter(ScatterLayout):
 
     def calculate_shape_size(self, width, height):
         self.wh_per = ((min(width, height) - 12) / 7)
+        self.min_size = (self.wh_per + 2) * 5
+
 
     def position_calculation(self):
         """
@@ -292,9 +296,13 @@ class CustomScatter(ScatterLayout):
                 pos_x, pos_y = label.pos
                 lbl_wid, lbl_hei = label.size
                 pos_x_check = (
-                    pos_x - lbl_wid / 2 <= obj_x <= pos_x + lbl_wid / 2)
+                    pos_x - lbl_wid / 2 <=
+                    obj_x <=
+                    pos_x + lbl_wid / 2)
                 pos_y_check = (
-                    pos_y - lbl_hei / 2 <= obj_y - self.touch_distance <= pos_y + lbl_hei / 2)
+                    pos_y - lbl_hei / 2 <=
+                    obj_y - self.touch_distance <=
+                    pos_y + lbl_hei / 2)
                 if pos_x_check and pos_y_check:
                     lbl_index = labels.index(label)
                     line_left = (lbl_index / 10) * 10
@@ -310,10 +318,9 @@ class CustomScatter(ScatterLayout):
             if hasattr(self, 'pre_pos'):
                 if (self.pre_pos != self.pos) and self.children[0].children:
                     self.parent.parent.sound.play('missed_placed')
-                    anim = Animation(
+                    Animation(
                         x=self.pre_pos[0], y=self.pre_pos[1],
-                        t='linear', duration=.2)
-                    anim.start(self)
+                        t='linear', duration=.2).start(self)
 
     def get_colored_area(self, board, label, **kwargs):
         """
@@ -487,6 +494,22 @@ class CustomScatter(ScatterLayout):
         return result and sorted(result,
                                  key=lambda x: x[1],
                                  reverse=True)[0][0] or []
+
+    def locate(self, per_shape_width, per_shape_height, width, height, index):
+        self.size_hint = (None, None)
+        self.size = (max(width, self.min_size),
+                     max(height, self.min_size))
+        scatter_pos_x = (
+                (per_shape_width * index) +
+                ((per_shape_width - self.size[0]) / 2 +
+                 (width < self.min_size and
+                  self.size[0] - width) / 2 or 0))
+
+        scatter_pos_y = ((per_shape_height - self.size[1]) / 2 -
+                         (height < self.min_size and
+                          (self.size[1] - height) / 2 or 0))
+        self.pos = (scatter_pos_x, scatter_pos_y)
+        self.pre_pos = self.pos
 
 
 class Sound(object):
@@ -1015,7 +1038,7 @@ class Kivy1010(GridLayout):
             scatter.clear_widgets()
             scatter.pos = (0, 0)
             scatter.pre_pos = scatter.pos
-
+        self.coming.height = self.get_shapes_size()
         per_shape_width = float(Window.width) / 3
         per_shape_height = float(self.coming.height)
 
@@ -1050,21 +1073,17 @@ class Kivy1010(GridLayout):
                         size=(scatter.wh_per, scatter.wh_per))
                 index += 1
                 if index % shape.cols == 0:
-                    height += scatter.wh_per + 1
+                    height += scatter.wh_per + 2
 
                 if index % shape.rows == 0:
-                    width += scatter.wh_per + 1
+                    width += scatter.wh_per + 2
                 shape.add_widget(box)
             shape.spacing = (2, 2)
-            scatter.size_hint = (None, None)
-            scatter.size = (width, height)
+
             index = scatters.index(scatter)
-            scatter_pos_x = (
-                                per_shape_width * index) + (
-                                (per_shape_width - scatter.size[0]) / 2)
-            scatter_pos_y = (per_shape_height - scatter.size[1]) / 2
-            scatter.pos = (scatter_pos_x, scatter_pos_y)
-            scatter.pre_pos = scatter.pos
+            scatter.locate(per_shape_width, per_shape_height,
+                           width, height, index)
+
             self.last_moved = datetime.now()
 
             scatter.add_widget(shape)
@@ -1137,14 +1156,8 @@ class Kivy1010(GridLayout):
                         if index % shape.rows == 0:
                             shape_width += scatter.wh_per + 2
                     index = scatters.index(scatter)
-                    scatter.size_hint = (None, None)
-                    scatter.size = (shape_width, shape_height)
-                    scatter_pos_x = (
-                        (per_shape_width * index) + (
-                            (per_shape_width - scatter.size[0]) / 2))
-                    scatter_pos_y = (per_shape_height - scatter.size[1]) / 2
-                    scatter.pos = (scatter_pos_x, scatter_pos_y)
-                    scatter.pre_pos = scatter.pos
+                    scatter.locate(per_shape_width, per_shape_height,
+                                   shape_width, shape_height, index)
         except:
             pass
 
