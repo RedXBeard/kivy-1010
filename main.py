@@ -439,7 +439,7 @@ class CustomScatter(ScatterLayout):
             box = 1
             for y in x:
                 anim = Animation(rgba=board.parent.labels,
-                                 d=float(box) / 15, t='in_circ')
+                                 d=float(box) / 35, t='in_circ')
                 anim.start(y)
                 box += 1
         if score_update:

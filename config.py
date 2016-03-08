@@ -6,7 +6,6 @@ from kivy.storage.jsonstore import JsonStore
 from kivy.utils import get_color_from_hex
 from kivy import user_home_dir
 
-
 def run_syscall(cmd):
     """
     run_syscall; handle sys calls this function used as shortcut.
@@ -20,6 +19,8 @@ if platform in ['linux', 'macosx']:
     PATH_SEPERATOR = '/'
     cmd = "echo $HOME"
 elif platform in ['android', 'ios']:
+    from jnius import autoclass
+    environment = autoclass('android.os.Environment')
     PATH_SEPERATOR = '/'
     cmd = ""
 else:
@@ -32,6 +33,8 @@ if cmd:
     out = run_syscall(cmd)
     REPOFILE = "%(out)s%(ps)s.kivy-1010%(ps)skivy1010" % {
         'out': out.rstrip(), 'ps': PATH_SEPERATOR}
+elif platform == 'android':
+    REPOFILE = os.path.join(environment.getExternalStorageDirectory().getAbsolutePath(), "kivy1010/kivy1010")
 else:
     REPOFILE = os.path.join(user_home_dir, "kivy1010")
 
