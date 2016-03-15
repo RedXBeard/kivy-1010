@@ -267,6 +267,7 @@ class CustomScatter(ScatterLayout):
     def __init__(self, *args, **kwargs):
         super(CustomScatter, self).__init__(*args, **kwargs)
         self.movement = 0
+        self.move_up_on_touch = 0
 
     def on_transform_with_touch(self, touch):
         """take action when shape touched.
@@ -317,12 +318,11 @@ class CustomScatter(ScatterLayout):
         posy_check = self.pos[1] < touch.pos[1] < self.pos[1] + self.height
         if platform in ['android', 'ios'] and posx_check and posy_check:
             row_count = self.children[0].children[0].rows
+            self.move_up_on_touch = (row_count *
+                                     (3 + root.per_box))
             Animation(
-                x=self.pos[0], y=(touch.pos[1] +
-                                  (row_count > 1 and
-                                   row_count or
-                                   row_count + 1) *
-                                  (3 + root.per_box)),
+                y=touch.pos[1] + self.move_up_on_touch,
+                move_up_on_touch = 0,
                 t='linear', duration=.05).start(self)
 
     def reset_shape(self):
