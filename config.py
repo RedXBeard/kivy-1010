@@ -19,8 +19,9 @@ if platform in ['linux', 'macosx']:
     PATH_SEPERATOR = '/'
     cmd = "echo $HOME"
 elif platform in ['android', 'ios']:
-    from jnius import autoclass
-    environment = autoclass('android.os.Environment')
+    if platform == 'android':
+        from jnius import autoclass
+        environment = autoclass('android.os.Environment')
     PATH_SEPERATOR = '/'
     cmd = ""
 else:
