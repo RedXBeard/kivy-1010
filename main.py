@@ -159,6 +159,68 @@ def free_positions(board, shape):
     return place, all_positions
 
 
+def get_scoreboard_height():
+    return Window.height / 10
+
+
+def get_board_size():
+    score_board_height = get_scoreboard_height()
+    return float(min(Window.width - 80,
+                     (Window.height - score_board_height) / 10 * 7))
+
+
+def open_page(*args):
+    webbrowser.open(args[1])
+
+
+def generate_play_button():
+    button = Button(background_color=get_color_from_hex('58CB85'))
+    button.curve = 25
+    button.image.source = 'assets/images/play.png'
+    set_color(button, get_color_from_hex('58CB85'))
+    return button
+
+
+def generate_medal_label():
+    """
+    :return: Label
+    """
+    label = Label(size_hint=(.7, 1))
+    label.curve = 25
+    label.image.source = 'assets/images/award.png'
+    label.image.size = ('50sp', '50sp')
+    set_color(label, get_color_from_hex('5BBEE5'))
+    return label
+
+
+def sync_score(score):
+    DB.store_put('score', score)
+    DB.store_sync()
+
+
+def sync_board(board):
+    DB.store_put('board', board)
+    DB.store_sync()
+
+
+def get_synced_board():
+    board = DB.store_get('board')
+    return board
+
+
+def get_synced_shapes():
+    shapes = DB.store_get('shapes')
+    return shapes
+
+
+def get_record():
+    try:
+        high_score = DB.store_get('high_score')
+    except KeyError:
+        high_score = 0
+    return high_score
+
+
 class Shape(GridLayout):
     """
     Generate shapes from given already set list with random colour.
@@ -201,6 +263,10 @@ class CustomScatter(ScatterLayout):
     last_moved = None
     touch_distance = 0
     min_size = 0
+
+    def __init__(self, *args, **kwargs):
+        super(CustomScatter, self).__init__(*args, **kwargs)
+        self.movement = 0
 
     def on_transform_with_touch(self, touch):
         """take action when shape touched.
@@ -277,7 +343,6 @@ class CustomScatter(ScatterLayout):
         self.wh_per = ((min(width, height) - 12) / 7)
         self.min_size = (self.wh_per + 2) * 5
 
-
     def position_calculation(self):
         """
         On board, taken scatter position is on a label or not check is handled
@@ -293,7 +358,7 @@ class CustomScatter(ScatterLayout):
                 lbl_wid, lbl_hei = label.size
                 pos_x_check = (
                     pos_x - lbl_wid / 2 <=
-                    obj_x <=
+                    obj_x + self.movement <=
                     pos_x + lbl_wid / 2)
                 pos_y_check = (
                     pos_y - lbl_hei / 2 <=
@@ -497,15 +562,19 @@ class CustomScatter(ScatterLayout):
                      max(height, self.min_size))
         scatter_pos_x = (
                 (per_shape_width * index) +
-                ((per_shape_width - self.size[0]) / 2 +
-                 (width < self.min_size and
-                  self.size[0] - width) / 2 or 0))
+                (per_shape_width - self.size[0]) / 2)
 
         scatter_pos_y = ((per_shape_height - self.size[1]) / 2 -
                          (height < self.min_size and
                           (self.size[1] - height) / 2 or 0))
         self.pos = (scatter_pos_x, scatter_pos_y)
         self.pre_pos = self.pos
+        if self.children[0].children:
+            per_lbl = self.children[0].children[0].children[0].width
+            shape = self.children[0].children[0]
+            self.movement = (self.size[0] - per_lbl * shape.cols) / 2
+            scatter_pos_x -= self.movement
+            shape.pos = (self.movement, shape.pos[1])
 
 
 class Sound(object):
@@ -559,68 +628,6 @@ class Sound(object):
                 sound.stop()
         except AttributeError:
             pass
-
-
-def get_scoreboard_height():
-    return Window.height / 10
-
-
-def get_board_size():
-    score_board_height = get_scoreboard_height()
-    return float(min(Window.width - 80,
-                     (Window.height - score_board_height) / 10 * 7))
-
-
-def open_page(*args):
-    webbrowser.open(args[1])
-
-
-def generate_play_button():
-    button = Button(background_color=get_color_from_hex('58CB85'))
-    button.curve = 25
-    button.image.source = 'assets/images/play.png'
-    set_color(button, get_color_from_hex('58CB85'))
-    return button
-
-
-def generate_medal_label():
-    """
-    :return: Label
-    """
-    label = Label(size_hint=(.7, 1))
-    label.curve = 25
-    label.image.source = 'assets/images/award.png'
-    label.image.size = ('50sp', '50sp')
-    set_color(label, get_color_from_hex('5BBEE5'))
-    return label
-
-
-def sync_score(score):
-    DB.store_put('score', score)
-    DB.store_sync()
-
-
-def sync_board(board):
-    DB.store_put('board', board)
-    DB.store_sync()
-
-
-def get_synced_board():
-    board = DB.store_get('board')
-    return board
-
-
-def get_synced_shapes():
-    shapes = DB.store_get('shapes')
-    return shapes
-
-
-def get_record():
-    try:
-        high_score = DB.store_get('high_score')
-    except KeyError:
-        high_score = 0
-    return high_score
 
 
 class Kivy1010(GridLayout):
@@ -1077,14 +1084,11 @@ class Kivy1010(GridLayout):
             shape.spacing = (2, 2)
 
             index = scatters.index(scatter)
-            scatter.locate(per_shape_width, per_shape_height,
-                           width, height, index)
 
             self.last_moved = datetime.now()
-            # s_x, s_y = scatter.size
-            # s_posx, s_posy = scatter.pos
-            # shape.pos = ((s_x / 2) - (width / 2)), -20
             scatter.add_widget(shape)
+            scatter.locate(per_shape_width, per_shape_height,
+                           width, height, index)
             label_colors = shape.get_colors()
             scatter.do_translation_y = True
             scatter.do_translation_x = True
