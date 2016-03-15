@@ -1109,16 +1109,17 @@ class Kivy1010(GridLayout):
         wh = get_ratio()
         try:
             score_board_height = get_scoreboard_height()
-            (self.score_board.visual_score_label.width,
-             self.score_board.visual_score_label.height) = (
-                (width / 2) - (self.score_board.award_img.width / 2), score_board_height)
             self.score_board.width = width
-            self.score_board.height = score_board_height + 30
+            self.score_board.height = score_board_height
             button = self.get_pause_but()
             button.image.size = (self.score_board.height / 4,
                                  self.score_board.height)
             button.width = self.score_board.height / 2
-        except:
+            (self.score_board.visual_score_label.width,
+             self.score_board.visual_score_label.height) = (
+                (width / 2) - (self.score_board.height / 4), score_board_height)
+        except Exception, e:
+            print "FUCK", e
             pass
 
         try:
