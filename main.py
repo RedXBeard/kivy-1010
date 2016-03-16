@@ -266,7 +266,7 @@ class CustomScatter(ScatterLayout):
 
     def __init__(self, *args, **kwargs):
         super(CustomScatter, self).__init__(*args, **kwargs)
-        self.movement = 0
+        self.movement = (0, 0)
         self.move_up_on_touch = 0
 
     def on_transform_with_touch(self, touch):
@@ -358,11 +358,11 @@ class CustomScatter(ScatterLayout):
                 lbl_wid, lbl_hei = label.size
                 pos_x_check = (
                     pos_x - lbl_wid / 2 <=
-                    obj_x + self.movement <=
+                    obj_x + self.movement[0] <=
                     pos_x + lbl_wid / 2)
                 pos_y_check = (
                     pos_y - lbl_hei / 2 <=
-                    obj_y - self.touch_distance <=
+                    obj_y - self.touch_distance - self.movement[1] <=
                     pos_y + lbl_hei / 2)
                 if pos_x_check and pos_y_check:
                     lbl_index = labels.index(label)
@@ -564,17 +564,17 @@ class CustomScatter(ScatterLayout):
                 (per_shape_width * index) +
                 (per_shape_width - self.size[0]) / 2)
 
-        scatter_pos_y = ((per_shape_height - self.size[1]) / 2 -
-                         (height < self.min_size and
-                          (self.size[1] - height) / 2 or 0))
+        scatter_pos_y = (per_shape_height - self.size[1]) / 3
         self.pos = (scatter_pos_x, scatter_pos_y)
         self.pre_pos = self.pos
         if self.children[0].children:
             per_lbl = self.children[0].children[0].children[0].width
             shape = self.children[0].children[0]
-            self.movement = (self.size[0] - per_lbl * shape.cols) / 2
-            scatter_pos_x -= self.movement
+            self.movement = ((self.size[0] - per_lbl * shape.cols) / 2,
+                             (self.size[1] - per_lbl * shape.rows) / 2)
+            scatter_pos_x -= self.movement[0]
             shape.pos = (self.movement, shape.pos[1])
+            shape.pos = (self.movement[0], -1 * self.movement[1])
 
 
 class Sound(object):
