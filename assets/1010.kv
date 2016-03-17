@@ -50,7 +50,8 @@
     Image:
         id: image
         source: 'assets/images/trans.png'
-        pos: self.parent.pos[0]+self.parent.width/2-self.width/2, self.parent.pos[1]+self.parent.height/2-self.height/2
+        center: self.parent.center
+        allow_stretch: True
 
 Image:
     filled: False

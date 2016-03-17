@@ -22,7 +22,7 @@ from kivy.utils import get_color_from_hex
 
 from config import DB, THEME, COLOR, SHAPES, SOUNDS, WIN_SIZE
 
-__version__ = '1.5.2'
+__version__ = '1.5.3'
 
 # SCORE calculation
 """
@@ -219,6 +219,16 @@ def get_record():
     except KeyError:
         high_score = 0
     return high_score
+
+
+def resize_images(obj, prob_size):
+    if hasattr(obj, 'image') and obj.image.source.find('.png') != -1:
+        optimum_size = min(prob_size[0] / 6, prob_size[1] / 6)
+        obj.image.size_hint = None, None
+        obj.image.width, obj.image.height = optimum_size, optimum_size
+        obj.image.center = obj.center
+    for child in obj.children:
+        resize_images(child, prob_size=prob_size)
 
 
 class Shape(GridLayout):
@@ -897,6 +907,7 @@ class Kivy1010(GridLayout):
         return label
 
     def create_on_start_popup(self, *args):
+
         if self.popup:
             self.popup.dismiss()
         self.remove_pause_but()
@@ -946,6 +957,8 @@ class Kivy1010(GridLayout):
 
         title = self.popup.children[0].children[2]
         self.popup.children[0].remove_widget(title)
+
+        resize_images(self.popup, prob_size=self.popup.size)
         self.popup.open()
 
     def create_on_end_popup(self):
@@ -994,6 +1007,7 @@ class Kivy1010(GridLayout):
 
         title = self.popup.children[0].children[2]
         self.popup.children[0].remove_widget(title)
+        resize_images(self.popup, prob_size=self.popup.size)
         self.popup.open()
         sync_score(0)
         sync_board({})
@@ -1181,8 +1195,12 @@ class KivyMinesApp(App):
         Window.bind(on_close=self.save_board)
         Window.bind(on_stop=self.save_board)
         Window.bind(on_pause=self.save_board)
+        Window.bind(on_keyboard=self.keyboard_pressed)
         game.resize_all(float(Window.width), float(Window.height))
         return game
+
+    def keyboard_pressed(self, win, key, *args):
+        return self.stop()
 
     def on_pause(self):
         self.save_board()
@@ -1229,7 +1247,7 @@ class KivyMinesApp(App):
             DB.store_put('board', board_visual)
             DB.store_put('score', root.score)
             DB.store_sync()
-        except (ValueError, AttributeError):
+        except (ValueError, AttributeError, IndexError):
             pass
 
         try:
