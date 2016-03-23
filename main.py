@@ -176,7 +176,7 @@ def open_page(*args):
 def generate_play_button():
     button = Button(background_color=get_color_from_hex('58CB85'))
     button.curve = 25
-    button.image.source = 'assets/images/play.png'
+    button.image.source = 'atlas://assets/images/kivy1010atlas/play'
     set_color(button, get_color_from_hex('58CB85'))
     return button
 
@@ -187,7 +187,7 @@ def generate_medal_label():
     """
     label = Label(size_hint=(.7, 1))
     label.curve = 25
-    label.image.source = 'assets/images/award.png'
+    label.image.source = 'atlas://assets/images/kivy1010atlas/award'
     label.image.size = ('50sp', '50sp')
     set_color(label, get_color_from_hex('5BBEE5'))
     return label
@@ -222,7 +222,7 @@ def get_record():
 
 
 def resize_images(obj, prob_size):
-    if hasattr(obj, 'image') and obj.image.source.find('.png') != -1:
+    if hasattr(obj, 'image') and obj.image.source.find('') != -1:
         optimum_size = min(prob_size[0] / 6, prob_size[1] / 6)
         obj.image.size_hint = None, None
         obj.image.width, obj.image.height = optimum_size, optimum_size
@@ -755,9 +755,9 @@ class Kivy1010(GridLayout):
         try:
             button.disabled = attr if attr is not None else not self.disabled
             if button.disabled:
-                button.image.source = 'assets/images/trans.png'
+                button.image.source = 'atlas://assets/images/kivy1010atlas/trans'
             else:
-                button.image.source = 'assets/images/pause_%s.png' % (
+                button.image.source = 'atlas://assets/images/kivy1010atlas/pause_%s' % (
                     self.theme == 'dark' and 'dark' or 'sun')
         except AttributeError:
             pass
@@ -771,7 +771,7 @@ class Kivy1010(GridLayout):
         else:
             self.pause_change_disability(attr=False)
         button.bind(on_press=self.create_on_start_popup)
-        button.image.source = 'assets/images/pause_%s.png' % (
+        button.image.source = 'atlas://assets/images/kivy1010atlas/pause_%s' % (
             self.theme == 'dark' and 'dark' or 'sun')
         set_color(button, self.background)
 
@@ -789,7 +789,7 @@ class Kivy1010(GridLayout):
         try:
             try:
                 button = args[0]
-                if button.image.source == 'assets/images/refresh.png':
+                if button.image.source == 'atlas://assets/images/kivy1010atlas/refresh':
                     sync_score(0)
                     sync_board({})
             except IndexError:
@@ -821,7 +821,7 @@ class Kivy1010(GridLayout):
         global SOUND
         button = args[0]
         SOUND = not SOUND
-        button.image.source = 'assets/images/sound_%s.png' % (
+        button.image.source = 'atlas://assets/images/kivy1010atlas/sound_%s' % (
             SOUND and 'on' or 'off')
         DB.store_put('sound', SOUND)
         DB.store_sync()
@@ -863,7 +863,7 @@ class Kivy1010(GridLayout):
         restart = Button(background_color=get_color_from_hex('EC9449'))
         restart.curve = 25
         set_color(restart, get_color_from_hex('EC9449'))
-        restart.image.source = 'assets/images/refresh.png'
+        restart.image.source = 'atlas://assets/images/kivy1010atlas/refresh'
         restart.bind(on_press=self.go)
         return restart
 
@@ -873,9 +873,9 @@ class Kivy1010(GridLayout):
         """
         theme = Button(text_width=(self.width, None), halign='left')
         theme.curve = 25
-        image_source = 'assets/images/moon.png'
+        image_source = 'atlas://assets/images/kivy1010atlas/moon'
         if self.theme == "dark":
-            image_source = 'assets/images/sun.png'
+            image_source = 'atlas://assets/images/kivy1010atlas/sun'
         theme.image.source = image_source
         return theme
 
@@ -886,7 +886,7 @@ class Kivy1010(GridLayout):
         sound = Button(background_color=get_color_from_hex('EC9449'))
         sound.curve = 25
         set_color(sound, get_color_from_hex('EC9449'))
-        sound.image.source = 'assets/images/sound_%s.png' % (
+        sound.image.source = 'atlas://assets/images/kivy1010atlas/sound_%s' % (
             SOUND and 'on' or 'off'
         )
         sound.bind(on_press=self.change_sound)
@@ -1085,7 +1085,7 @@ class Kivy1010(GridLayout):
                     set_color(box, self.background)
                 else:
                     box = Image(
-                        source='assets/images/trans.png',
+                        source='atlas://assets/images/kivy1010atlas/trans',
                         size_hint=(None, None),
                         size=(scatter.wh_per, scatter.wh_per))
                 index += 1
@@ -1187,7 +1187,7 @@ class KivyMinesApp(App):
         super(KivyMinesApp, self).__init__(**kwargs)
         Builder.load_file('assets/1010.kv')
         self.title = 'Kivy 1010'
-        self.icon = 'assets/images/cube.png'
+        self.icon = 'atlas://assets/images/kivy1010atlas/cube'
 
     def build(self):
         game = Kivy1010()
@@ -1200,7 +1200,10 @@ class KivyMinesApp(App):
         return game
 
     def keyboard_pressed(self, win, key, *args):
-        return self.stop()
+        if platform == "android":
+            self.on_pause()
+            return True
+        return False
 
     def on_pause(self):
         self.save_board()

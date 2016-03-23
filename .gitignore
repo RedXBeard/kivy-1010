@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 
 .buildozer/
+bin/
 .idea/
 *.txt
 # C extensions

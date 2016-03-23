@@ -11,14 +11,14 @@
         Rectangle:
             pos: self.pos
             size: self.size
-            source: 'assets/images/trans.png'
+            source: 'atlas://assets/images/kivy1010atlas/trans'
 
 <Button>
     bold: True
-    background_normal: 'assets/images/trans.png'
-    background_down: 'assets/images/trans.png'
-    background_disabled_down: 'assets/images/trans.png'
-    background_disabled_normal: 'assets/images/trans.png'
+    background_normal: 'atlas://assets/images/kivy1010atlas/trans'
+    background_down: 'atlas://assets/images/kivy1010atlas/trans'
+    background_disabled_down: 'atlas://assets/images/kivy1010atlas/trans'
+    background_disabled_normal: 'atlas://assets/images/kivy1010atlas/trans'
     from_pause: False
 
 <Label>
@@ -49,7 +49,7 @@
     image: image
     Image:
         id: image
-        source: 'assets/images/trans.png'
+        source: 'atlas://assets/images/kivy1010atlas/trans'
         center: self.parent.center
         allow_stretch: True
 
@@ -86,7 +86,7 @@ Image:
             halign: 'right'
         Image:
             id: award_img
-            source: 'assets/images/award.png'
+            source: 'atlas://assets/images/kivy1010atlas/award'
             size_hint: None, 1
             width: self.height / 2
         Label:
