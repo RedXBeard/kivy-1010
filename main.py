@@ -1132,8 +1132,7 @@ class Kivy1010(GridLayout):
             (self.score_board.visual_score_label.width,
              self.score_board.visual_score_label.height) = (
                 (width / 2) - (self.score_board.height / 4), score_board_height)
-        except Exception, e:
-            print "FUCK", e
+        except Exception:
             pass
 
         try:
