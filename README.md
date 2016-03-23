@@ -28,6 +28,13 @@
 - Optimum window size considered.
 - Shapes colours are unique on each session.
 
+##### 1.5.0
+- Theme changed.
+- Android / IOS style served.
+- Calculation process extended of sizes and positions.
+- Package size eliminated.
+- Original game shapes applied. 
+
 ## Installation
 
 #### For MacOS
